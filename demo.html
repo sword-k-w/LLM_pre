@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Course QA Demo</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232d5a4f'/%3E%3Cpath d='M16 18h32v8H16zm0 14h32v8H16zm0 14h22v8H16z' fill='%23fffaf5'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="demo-body">
+    <div class="demo-shell">
+      <header class="demo-header">
+        <div>
+          <p class="eyebrow">Interactive Demo</p>
+          <h1>课程资料问答助手</h1>
+          <p class="lead">
+            用一套固定问题，对比 prompt / context / harness 三层工程差异。
+          </p>
+        </div>
+        <a class="demo-link" href="index.html">Back To Deck</a>
+      </header>
+
+      <main class="demo-layout">
+        <aside class="control-panel">
+          <section class="panel-block">
+            <div class="panel-title-row">
+              <h2>课堂预设</h2>
+              <span class="panel-note">讲一段，演一段</span>
+            </div>
+            <div class="preset-buttons">
+              <button class="preset-button is-active" data-preset="prompt">Prompt 段</button>
+              <button class="preset-button" data-preset="context">Context 段</button>
+              <button class="preset-button" data-preset="harness">Harness 段</button>
+            </div>
+          </section>
+
+          <section class="panel-block">
+            <div class="panel-title-row">
+              <h2>提问</h2>
+              <button id="cycle-question" class="ghost-button">换一个标准问题</button>
+            </div>
+            <textarea id="user-query" rows="4"></textarea>
+          </section>
+
+          <section class="panel-block">
+            <div class="panel-title-row">
+              <h2>系统 Prompt</h2>
+              <span class="panel-note">可直接改</span>
+            </div>
+            <textarea id="system-prompt" rows="7"></textarea>
+          </section>
+
+          <section class="panel-block">
+            <div class="panel-title-row">
+              <h2>课程资料上下文</h2>
+              <button id="toggle-contexts" class="ghost-button">全选 / 清空</button>
+            </div>
+            <div id="context-list" class="context-list"></div>
+          </section>
+
+          <section class="panel-block">
+            <div class="panel-title-row">
+              <h2>对比模式</h2>
+              <span class="panel-note">左侧永远是 baseline</span>
+            </div>
+            <div class="mode-grid">
+              <button class="mode-button is-active" data-mode="prompt_optimized">Prompt Optimized</button>
+              <button class="mode-button" data-mode="context_augmented">Context Augmented</button>
+              <button class="mode-button" data-mode="harness_mode">Harness Mode</button>
+            </div>
+          </section>
+
+          <section class="panel-block">
+            <button id="run-comparison" class="primary-action">运行对比</button>
+            <p class="hint">
+              运行失败时会自动切换到内置 fallback，课堂上不会卡死。
+            </p>
+          </section>
+        </aside>
+
+        <section class="output-panel">
+          <div class="status-bar">
+            <div class="status-chip">
+              <span>当前预设</span>
+              <strong id="preset-label">Prompt 段</strong>
+            </div>
+            <div class="status-chip">
+              <span>标准问题命中</span>
+              <strong id="question-index">1 / 3</strong>
+            </div>
+            <div class="status-chip">
+              <span>模式</span>
+              <strong id="selected-mode-label">Prompt Optimized</strong>
+            </div>
+          </div>
+
+          <div class="comparison-grid">
+            <article class="result-card">
+              <div class="result-head">
+                <div>
+                  <p class="eyebrow">Baseline</p>
+                  <h2>无约束 / 无上下文</h2>
+                </div>
+                <div class="latency-pill" id="baseline-latency">-- ms</div>
+              </div>
+              <div class="meta-row">
+                <span id="baseline-source">等待运行</span>
+                <span>Mode: baseline</span>
+              </div>
+              <pre id="baseline-output" class="result-output"></pre>
+            </article>
+
+            <article class="result-card highlight-card">
+              <div class="result-head">
+                <div>
+                  <p class="eyebrow">Selected Mode</p>
+                  <h2 id="selected-title">Prompt Optimized</h2>
+                </div>
+                <div class="latency-pill" id="selected-latency">-- ms</div>
+              </div>
+              <div class="meta-row">
+                <span id="selected-source">等待运行</span>
+                <span id="selected-mode-tag">Mode: prompt_optimized</span>
+              </div>
+              <pre id="selected-output" class="result-output"></pre>
+            </article>
+          </div>
+
+          <div class="insight-grid">
+            <article class="insight-card">
+              <p class="eyebrow">Harness Checks</p>
+              <h2>演示时重点观察</h2>
+              <ul id="harness-checks" class="checklist"></ul>
+            </article>
+            <article class="insight-card">
+              <p class="eyebrow">Classroom Script</p>
+              <h2>当前段落讲解词</h2>
+              <p id="script-note"></p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="demo.js"></script>
+  </body>
+</html>

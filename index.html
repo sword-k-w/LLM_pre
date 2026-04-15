@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prompt / Context / Harness Engineering</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23b6542e'/%3E%3Cpath d='M18 24h28v6H18zm0 10h20v6H18zm0 10h14v6H18z' fill='%23fffaf5'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="deck-body">
+    <div class="deck-shell">
+      <header class="deck-topbar">
+        <div>
+          <p class="eyebrow">LLM Course Mini Lecture</p>
+          <h1 id="deck-title">Prompt / Context / Harness Engineering</h1>
+        </div>
+        <a class="demo-link" href="demo.html">Open Demo</a>
+      </header>
+
+      <main class="deck" id="deck">
+        <section class="slide is-active" data-title="封面" data-presenter="A">
+          <div class="slide-grid slide-grid-cover">
+            <div>
+              <p class="eyebrow">大语言模型课程小组授课</p>
+              <h2>提示学习工程<br />上下文工程<br />以及 Harness Engineering</h2>
+              <p class="lead">
+                从“会写提示词”走向“能搭稳定、可验证的 LLM 系统”
+              </p>
+            </div>
+            <div class="cover-panel">
+              <div class="metric-card">
+                <span>时长</span>
+                <strong>45 min</strong>
+              </div>
+              <div class="metric-card">
+                <span>形式</span>
+                <strong>讲一段 / 演一段</strong>
+              </div>
+              <div class="metric-card">
+                <span>对象</span>
+                <strong>已学基础 LLM 的同学</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="为什么不只讲 Prompt" data-presenter="A">
+          <div class="slide-grid">
+            <div>
+              <p class="eyebrow">Problem Shift</p>
+              <h2>真实系统的失败点，往往不在一句提示词里</h2>
+            </div>
+            <div class="card-stack">
+              <article class="content-card">
+                <h3>只会“改提示词”不够</h3>
+                <ul>
+                  <li>回答看似流畅，但不引用课程资料</li>
+                  <li>同一问题多次提问，输出风格和质量漂移</li>
+                  <li>换一个任务后，之前的调优经验很难复用</li>
+                </ul>
+              </article>
+              <article class="content-card accent-card">
+                <h3>工程视角要处理三层问题</h3>
+                <ul>
+                  <li><strong>Prompt</strong>：怎么说，模型更容易按要求答</li>
+                  <li><strong>Context</strong>：给什么信息，模型才有依据</li>
+                  <li><strong>Harness</strong>：怎么比较、评测、复现实验</li>
+                </ul>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="节奏与分工" data-presenter="A">
+          <p class="eyebrow">Flow</p>
+          <h2>课程结构与四人分工</h2>
+          <div class="timeline-grid">
+            <article class="timeline-card">
+              <span class="badge">A</span>
+              <h3>Prompt Engineering</h3>
+              <p>定义、基本技巧、正反案例</p>
+              <strong>10 min</strong>
+            </article>
+            <article class="timeline-card">
+              <span class="badge">B</span>
+              <h3>Context Engineering</h3>
+              <p>检索、状态、长上下文、信息编排</p>
+              <strong>10 min</strong>
+            </article>
+            <article class="timeline-card">
+              <span class="badge">C</span>
+              <h3>Harness Engineering</h3>
+              <p>实验面板、回归样例、轻量工作流</p>
+              <strong>8 min</strong>
+            </article>
+            <article class="timeline-card">
+              <span class="badge">D</span>
+              <h3>Demo + Wrap-up</h3>
+              <p>三段穿插演示、整合方法论</p>
+              <strong>12 min</strong>
+            </article>
+          </div>
+          <div class="footer-note">
+            Demo 场景统一为“课程资料问答助手”，讲一段，马上演一段。
+          </div>
+        </section>
+
+        <section class="slide" data-title="Prompt 是什么" data-presenter="A">
+          <div class="two-column">
+            <article class="content-card">
+              <p class="eyebrow">Section 1</p>
+              <h2>Prompt Engineering</h2>
+              <p class="lead">
+                目标不是“写花哨提示词”，而是把任务定义、约束条件和输出规格说清楚。
+              </p>
+            </article>
+            <article class="content-card">
+              <h3>最常用的四个杠杆</h3>
+              <ul>
+                <li>角色：你希望模型扮演谁</li>
+                <li>任务：要完成什么、不要做什么</li>
+                <li>格式：答案结构、长度、字段约束</li>
+                <li>示例：给少量样例，减少理解偏差</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Prompt 的最小模板" data-presenter="A">
+          <p class="eyebrow">Prompt Template</p>
+          <h2>一个好 prompt 至少应该回答四件事</h2>
+          <div class="prompt-grid">
+            <article class="prompt-card">
+              <span>1</span>
+              <h3>你是谁</h3>
+              <p>例如：你是课程助教，回答应面向本科生。</p>
+            </article>
+            <article class="prompt-card">
+              <span>2</span>
+              <h3>你要做什么</h3>
+              <p>例如：只回答与课程资料相关的问题。</p>
+            </article>
+            <article class="prompt-card">
+              <span>3</span>
+              <h3>你如何输出</h3>
+              <p>例如：先给结论，再列证据来源。</p>
+            </article>
+            <article class="prompt-card">
+              <span>4</span>
+              <h3>你何时拒答</h3>
+              <p>例如：资料没有覆盖时，明确说明不确定。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Prompt Demo" data-presenter="A">
+          <div class="demo-callout">
+            <div>
+              <p class="eyebrow">Live Demo 1</p>
+              <h2>同一个问题，Prompt 改写前后差在哪？</h2>
+            </div>
+            <div class="content-card">
+              <h3>演示脚本</h3>
+              <ul>
+                <li>问题：课程项目需要交什么内容？</li>
+                <li>先跑 `baseline`：没有角色、没有格式、没有约束</li>
+                <li>再跑 `prompt_optimized`：加入角色、结构和拒答规则</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Context 是什么" data-presenter="B">
+          <div class="slide-grid">
+            <div>
+              <p class="eyebrow">Section 2</p>
+              <h2>Context Engineering</h2>
+              <p class="lead">
+                Prompt 解决“怎么说”，Context 解决“给什么信息、按什么顺序给”。
+              </p>
+            </div>
+            <div class="content-card">
+              <h3>在课程问答里，常见上下文来源</h3>
+              <ul>
+                <li>系统提示：课程助手的身份和边界</li>
+                <li>课程资料：讲义、作业说明、评分标准</li>
+                <li>对话历史：之前追问了什么</li>
+                <li>工具输出：检索结果、数据库字段、网页片段</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Context 的关键工作" data-presenter="B">
+          <p class="eyebrow">Context Design</p>
+          <h2>上下文工程不是“塞更多字”，而是“塞对信息”</h2>
+          <div class="card-stack">
+            <article class="content-card">
+              <h3>关键问题</h3>
+              <ul>
+                <li>哪些信息该给，哪些信息会造成噪声</li>
+                <li>信息以什么顺序进入模型</li>
+                <li>不同来源冲突时，谁优先</li>
+                <li>长上下文里，哪些内容值得保留</li>
+              </ul>
+            </article>
+            <article class="content-card accent-card">
+              <h3>课程问答中的具体做法</h3>
+              <ul>
+                <li>优先塞与当前问题直接相关的课程片段</li>
+                <li>保留出处，让回答能引用证据</li>
+                <li>资料缺失时明确说“不确定”而不是编造</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Context Demo" data-presenter="B">
+          <div class="demo-callout">
+            <div>
+              <p class="eyebrow">Live Demo 2</p>
+              <h2>没有课程资料 vs 注入课程资料</h2>
+            </div>
+            <div class="content-card">
+              <h3>演示脚本</h3>
+              <ul>
+                <li>问题：小组授课最终需要交什么文件？</li>
+                <li>先跑 `prompt_optimized`：格式很好，但可能缺证据</li>
+                <li>再跑 `context_augmented`：注入课程要求片段，观察引用和细节</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Harness 是什么" data-presenter="C">
+          <div class="two-column">
+            <article class="content-card">
+              <p class="eyebrow">Section 3</p>
+              <h2>Harness Engineering</h2>
+              <p class="lead">
+                当 prompt 和 context 开始变多，就需要一个“实验框架”来比较方案、固定样例、追踪退化。
+              </p>
+            </article>
+            <article class="content-card">
+              <h3>它做的不是“让模型更聪明”</h3>
+              <ul>
+                <li>让不同方案可复现、可横向比较</li>
+                <li>把关键任务固化成标准测试样例</li>
+                <li>把系统从一次性试玩变成能迭代的产品</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Harness 怎么落地" data-presenter="C">
+          <p class="eyebrow">Minimal Harness</p>
+          <h2>轻量落地版：一套固定问题 + 多种模式 + 清晰检查项</h2>
+          <div class="timeline-grid">
+            <article class="timeline-card">
+              <h3>固定问题集</h3>
+              <p>确保每次实验都在回答同一批关键问题。</p>
+            </article>
+            <article class="timeline-card">
+              <h3>模式切换</h3>
+              <p>一键比较 baseline / prompt / context / harness。</p>
+            </article>
+            <article class="timeline-card">
+              <h3>最小评测标准</h3>
+              <p>是否答到点、是否引用资料、是否承认不确定。</p>
+            </article>
+            <article class="timeline-card">
+              <h3>轻量工作流</h3>
+              <p>需要时再加入检索、工具调用、结果后处理。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Harness Demo" data-presenter="C">
+          <div class="demo-callout">
+            <div>
+              <p class="eyebrow">Live Demo 3</p>
+              <h2>从“能答”升级到“可比较、可回归”</h2>
+            </div>
+            <div class="content-card">
+              <h3>演示脚本</h3>
+              <ul>
+                <li>切到 `harness_mode`，加载标准问题集</li>
+                <li>观察回答是否带证据、是否声明未知、是否遵守输出结构</li>
+                <li>说明：这就是后续做 agent / workflow 的基础设施</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="三者关系" data-presenter="D">
+          <p class="eyebrow">Synthesis</p>
+          <h2>一张图看清 Prompt / Context / Harness 的边界</h2>
+          <div class="relationship-grid">
+            <article class="content-card">
+              <h3>Prompt</h3>
+              <p>定义单次交互的任务、角色、格式和约束。</p>
+            </article>
+            <article class="content-card">
+              <h3>Context</h3>
+              <p>组织进入模型的信息流，包括资料、状态、检索结果和对话历史。</p>
+            </article>
+            <article class="content-card">
+              <h3>Harness</h3>
+              <p>为系统提供实验面板、回归样例、模式对比和最小评测。</p>
+            </article>
+          </div>
+          <div class="footer-note">
+            关系可以理解为：<strong>Prompt 决定表达，Context 决定依据，Harness 决定迭代方式。</strong>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Takeaways" data-presenter="D">
+          <div class="slide-grid">
+            <div>
+              <p class="eyebrow">Checklist</p>
+              <h2>希望同学带走的 6 条实践原则</h2>
+            </div>
+            <div class="content-card">
+              <ul class="checklist">
+                <li>先写清输出结构，再追求文风和润色</li>
+                <li>不给依据，就不要期待稳定高质量回答</li>
+                <li>上下文越多不一定越好，相关性更重要</li>
+                <li>把拒答规则写进去，比让模型硬答更可靠</li>
+                <li>重要任务要有固定样例，避免优化后偷偷退化</li>
+                <li>先做轻量 harness，再考虑更复杂的 agent 编排</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Q&A" data-presenter="D">
+          <div class="slide-grid slide-grid-cover">
+            <div>
+              <p class="eyebrow">Discussion</p>
+              <h2>Q&amp;A</h2>
+              <p class="lead">
+                如果把课程问答助手继续做成产品，下一步通常是：
+              </p>
+              <ul>
+                <li>接入检索和课程资料索引</li>
+                <li>对接作业评分 rubric 与引用验证</li>
+                <li>让 harness 驱动更完整的 agent workflow</li>
+              </ul>
+            </div>
+            <div class="cover-panel">
+              <div class="metric-card">
+                <span>Prompt</span>
+                <strong>任务表达</strong>
+              </div>
+              <div class="metric-card">
+                <span>Context</span>
+                <strong>信息编排</strong>
+              </div>
+              <div class="metric-card">
+                <span>Harness</span>
+                <strong>实验系统</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="deck-footer">
+        <div class="slide-meta">
+          <span id="slide-counter">1 / 15</span>
+          <span id="slide-presenter">Presenter A</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="deck.js"></script>
+  </body>
+</html>
