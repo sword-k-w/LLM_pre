@@ -134,25 +134,26 @@
           </div>
         </section>
 
-        <section class="slide" data-title="三个设计维度" data-presenter="A">
-          <p class="eyebrow">Three Dimensions</p>
-          <h2>一个好的 Prompt 要把三件事说清楚</h2>
+        <section class="slide" data-title="四个设计维度" data-presenter="A">
+          <p class="eyebrow">Four Dimensions</p>
+          <h2>Prompt 设计的四个核心维度</h2>
           <div class="relationship-grid">
             <article class="content-card">
               <h3>任务说明</h3>
-              <p>你要做什么、不要做什么、边界在哪。</p>
+              <p>角色、边界与拒答规则——定义模型"能做什么、不能做什么"。</p>
             </article>
             <article class="content-card accent-card">
               <h3>推理引导</h3>
-              <p>让模型把推理过程显式化，而不是直接跳答案。</p>
+              <p>让模型把思考过程显式化，避免在多步推导上直接跳步出错。</p>
             </article>
             <article class="content-card">
               <h3>格式控制</h3>
-              <p>答案长什么样：格式、结构、字段约束。</p>
+              <p>正向描述输出结构——字段、长度、是否使用 Markdown。</p>
             </article>
-          </div>
-          <div class="footer-note">
-            好的 Prompt 不是越长越好，也不是加魔法词——而是把这三件事写清楚。
+            <article class="content-card accent-card">
+              <h3>示例设计</h3>
+              <p>Zero-shot 到 CoT Few-shot——用示例展示期望行为，而不只是描述。</p>
+            </article>
           </div>
         </section>
 
@@ -227,20 +228,29 @@
           </div>
         </section>
 
-        <section class="slide" data-title="Prompt Demo" data-presenter="A">
-          <div class="demo-callout">
-            <div>
-              <p class="eyebrow">Live Demo 1</p>
-              <h2>同一个问题，Prompt 改写前后差在哪？</h2>
-            </div>
-            <div class="content-card">
-              <h3>演示脚本</h3>
-              <ul>
-                <li>问题：课程项目需要交什么内容？</li>
-                <li>先跑 `baseline`：没有角色、没有格式、没有约束</li>
-                <li>再跑 `prompt_optimized`：加入角色、结构和拒答规则</li>
-              </ul>
-            </div>
+        <section class="slide" data-title="示例设计" data-presenter="A">
+          <p class="eyebrow">Dimension 4 — Demonstration</p>
+          <h2>示例设计：用展示代替描述</h2>
+          <div class="timeline-grid">
+            <article class="timeline-card">
+              <h3>Zero-shot</h3>
+              <p>只给指令，不给例子。任务边界清晰时优先选它——token 成本最低。</p>
+            </article>
+            <article class="timeline-card">
+              <h3>One-shot</h3>
+              <p>一个完整的输入→输出例子，帮模型锚定语气、视角和细粒度格式要求。</p>
+            </article>
+            <article class="timeline-card">
+              <h3>Few-shot</h3>
+              <p>2–5 个例子，形成完整模式。适合格式复杂、风格微妙或评判标准难以用语言表达的任务。</p>
+            </article>
+            <article class="timeline-card">
+              <h3>CoT Few-shot</h3>
+              <p>例子本身包含推理过程，引导模型在新问题上也显式推理，比单纯说"请一步步思考"更可靠。</p>
+            </article>
+          </div>
+          <div class="footer-note">
+            代价：例子越多，上下文越长，token 成本越高。一个质量差的例子比没有例子更糟——会把模型锚定到错误方向。
           </div>
         </section>
 
