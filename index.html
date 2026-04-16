@@ -109,49 +109,120 @@
         </section>
 
         <section class="slide" data-title="Prompt 是什么" data-presenter="A">
-          <div class="two-column">
-            <article class="content-card">
+          <div class="slide-grid">
+            <div>
               <p class="eyebrow">Section 1</p>
               <h2>Prompt Engineering</h2>
               <p class="lead">
-                目标不是“写花哨提示词”，而是把任务定义、约束条件和输出规格说清楚。
+                目标不是”写花哨提示词”，而是<strong>精确描述任务（Specification）</strong>——缩小模型的输出空间，使它只能朝你要的方向走。
               </p>
+            </div>
+            <div class="card-stack">
+              <article class="content-card">
+                <h3>同一个任务，两种表述</h3>
+                <ul>
+                  <li>模糊：”做一个好用的登录页”</li>
+                  <li>精确：”做登录页：含邮箱框和密码框，失败三次锁定，成功后跳转 /dashboard”</li>
+                </ul>
+                <p>给的信息越模糊，模型猜的方向就越多，输出质量的方差就越大。</p>
+              </article>
+              <article class="content-card accent-card">
+                <h3>黄金法则</h3>
+                <p>把提示词给刚入职的同事看，让他按字面意思执行——<strong>如果他会懵，模型也会懵。</strong></p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="三个设计维度" data-presenter="A">
+          <p class="eyebrow">Three Dimensions</p>
+          <h2>一个好的 Prompt 要把三件事说清楚</h2>
+          <div class="relationship-grid">
+            <article class="content-card">
+              <h3>任务说明</h3>
+              <p>你要做什么、不要做什么、边界在哪。</p>
+            </article>
+            <article class="content-card accent-card">
+              <h3>推理引导</h3>
+              <p>让模型把推理过程显式化，而不是直接跳答案。</p>
             </article>
             <article class="content-card">
-              <h3>最常用的四个杠杆</h3>
-              <ul>
-                <li>角色：你希望模型扮演谁</li>
-                <li>任务：要完成什么、不要做什么</li>
-                <li>格式：答案结构、长度、字段约束</li>
-                <li>示例：给少量样例，减少理解偏差</li>
-              </ul>
+              <h3>格式控制</h3>
+              <p>答案长什么样：格式、结构、字段约束。</p>
+            </article>
+          </div>
+          <div class="footer-note">
+            好的 Prompt 不是越长越好，也不是加魔法词——而是把这三件事写清楚。
+          </div>
+        </section>
+
+        <section class="slide" data-title="维度一：任务说明" data-presenter="A">
+          <p class="eyebrow">Dimension 1 — Task</p>
+          <h2>任务说明：告诉模型做什么、不做什么、边界在哪</h2>
+          <div class="card-stack">
+            <article class="content-card">
+              <h3>角色定义</h3>
+              <p>限制语气、视角和知识边界。</p>
+              <p><em>✗ "你是一个助手，回答用户的问题"</em></p>
+              <p><em>✓ "你是课程助教，面向本科生，不假设研究背景，用类比帮助理解"</em></p>
+            </article>
+            <article class="content-card">
+              <h3>任务边界</h3>
+              <p>要做什么，更重要的是<strong>不要做什么</strong>——没有约束，模型会热情地回答一切。</p>
+              <p><em>✗ "帮用户解答所有问题"</em></p>
+              <p><em>✓ "只回答课程相关问题，其他问题一律说超出范围"</em></p>
+            </article>
+            <article class="content-card accent-card">
+              <h3>拒答规则</h3>
+              <p>没有把握时说不确定，比让模型硬答再产生幻觉要好得多。</p>
+              <p><em>✗ （不写拒答规则，让模型自由发挥）</em></p>
+              <p><em>✓ "资料没有覆盖时，明确说不确定，不要猜测或编造"</em></p>
             </article>
           </div>
         </section>
 
-        <section class="slide" data-title="Prompt 的最小模板" data-presenter="A">
-          <p class="eyebrow">Prompt Template</p>
-          <h2>一个好 prompt 至少应该回答四件事</h2>
-          <div class="prompt-grid">
-            <article class="prompt-card">
-              <span>1</span>
-              <h3>你是谁</h3>
-              <p>例如：你是课程助教，回答应面向本科生。</p>
+        <section class="slide" data-title="维度二：推理引导" data-presenter="A">
+          <div class="slide-grid">
+            <div>
+              <p class="eyebrow">Dimension 2 — Reasoning</p>
+              <h2>推理引导：给模型一张草稿纸</h2>
+              <p class="lead">
+                LLM 生成每个词时只能看到已生成的内容。不给它"打草稿"的空间，它会跳步——答案听起来很有信心，但中间推理可能出错。
+              </p>
+            </div>
+            <div class="card-stack">
+              <article class="content-card">
+                <h3>思维链（Chain of Thought）</h3>
+                <p>要求模型"先列步骤再给结论"——强制把中间推理写出来，每一步都可以被后续步骤检验。</p>
+              </article>
+              <article class="content-card accent-card">
+                <h3>对比：加不加推理引导</h3>
+                <p><em>✗ "小张比小李大 2 岁，小李比小王小 3 岁，小王 25 岁，小张多大？"</em></p>
+                <p><em>✓ "请先逐步写出每人的年龄关系，再给出答案。（同上题）"</em></p>
+                <p>加了引导后模型必须写出：小王 25 → 小李 22 → 小张 24，每步可验。</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="维度三：格式控制" data-presenter="A">
+          <p class="eyebrow">Dimension 3 — Output</p>
+          <h2>格式控制：直接影响工程可用性</h2>
+          <div class="two-column">
+            <article class="content-card">
+              <h3>正向描述格式</h3>
+              <p>说你<strong>想要什么</strong>，而不是不想要什么。</p>
+              <p><em>✗ "不要用 markdown"</em></p>
+              <p><em>✓ "用流畅的段落回答，不使用列表或标题"</em></p>
+              <p><em>✗ "返回 JSON"</em></p>
+              <p><em>✓ "只返回有效 JSON，字段：name、score（0–100 整数）、reason（一句话）"</em></p>
             </article>
-            <article class="prompt-card">
-              <span>2</span>
-              <h3>你要做什么</h3>
-              <p>例如：只回答与课程资料相关的问题。</p>
-            </article>
-            <article class="prompt-card">
-              <span>3</span>
-              <h3>你如何输出</h3>
-              <p>例如：先给结论，再列证据来源。</p>
-            </article>
-            <article class="prompt-card">
-              <span>4</span>
-              <h3>你何时拒答</h3>
-              <p>例如：资料没有覆盖时，明确说明不确定。</p>
+            <article class="content-card accent-card">
+              <h3>少样本示例（Few-shot）</h3>
+              <p>当格式用语言说不清时，给一两个输入→输出的例子。</p>
+              <p><em>输入："苹果公司 Q2 营收 940 亿，同比增长 5%"</em></p>
+              <p><em>输出：{"name":"苹果公司","score":72,"reason":"营收稳健但增速放缓"}</em></p>
+              <p><strong>一个好例子顶得上三句描述。</strong></p>
             </article>
           </div>
         </section>
@@ -170,6 +241,27 @@
                 <li>再跑 `prompt_optimized`：加入角色、结构和拒答规则</li>
               </ul>
             </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Prompt 的边界" data-presenter="A">
+          <div class="slide-grid">
+            <div>
+              <p class="eyebrow">Transition</p>
+              <h2>Prompt 写好了，但还不够</h2>
+              <p class="lead">
+                即使把任务说明、推理引导和格式控制都写清楚，模型仍然不知道——我们课程的评分标准、老师的通知、这份课程大纲的具体版本。
+              </p>
+            </div>
+            <article class="content-card accent-card">
+              <h3>Prompt 解决不了的问题</h3>
+              <ul>
+                <li>模型只能表达训练时学到的知识</li>
+                <li>它不知道你的私有资料和实时数据</li>
+                <li>更好的 Prompt 只能让它"更好地不知道"</li>
+              </ul>
+              <p>把外部知识送进模型，是下一个问题——<strong>Context Engineering</strong>。</p>
+            </article>
           </div>
         </section>
 
