@@ -1,3 +1,5 @@
 __pycharm__
 .codex
 CLAUDE.md
+.env
+.venv

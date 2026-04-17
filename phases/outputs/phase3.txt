@@ -1,0 +1,8 @@
+=== 3a: RAG — only the relevant chunk ===
+根据资料，您的 iPhone可以在购买后的14天内退货。请确保保留原始收据和完整包装。如果有进一步的疑问，请联系人工客服。
+
+=== 3b: Lost in the Middle — key chunk buried ===
+退货政策是智能手机提供 14 天退货窗口。请确保保留原始收据和完整包装，然后在规定时间内办理退货。
+
+=== 3c: Reranked — key fact prepended ===
+您的 iPhone符合智能手机的退货政策，可以在购买后的14天内退货，但需要保留原始收据和完整包装。建议您确保满足这些条件，然后前往 ZephyrMart 门店办理退货手续。
