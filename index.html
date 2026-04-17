@@ -127,8 +127,8 @@
                 <p>给的信息越模糊，模型猜的方向就越多，输出质量的方差就越大。</p>
               </article>
               <article class="content-card accent-card">
-                <h3>黄金法则</h3>
-                <p>把提示词给刚入职的同事看，让他按字面意思执行——<strong>如果他会懵，模型也会懵。</strong></p>
+                <h3>Golden Rule</h3>
+                <p>"Show your prompt to a colleague with minimal context on the task and ask them to follow it. <strong>If they'd be confused, Claude will be too.</strong>"</p>
               </article>
             </div>
           </div>
@@ -219,11 +219,10 @@
               <p><em>✓ "只返回有效 JSON，字段：name、score（0–100 整数）、reason（一句话）"</em></p>
             </article>
             <article class="content-card accent-card">
-              <h3>少样本示例（Few-shot）</h3>
-              <p>当格式用语言说不清时，给一两个输入→输出的例子。</p>
-              <p><em>输入："苹果公司 Q2 营收 940 亿，同比增长 5%"</em></p>
-              <p><em>输出：{"name":"苹果公司","score":72,"reason":"营收稳健但增速放缓"}</em></p>
-              <p><strong>一个好例子顶得上三句描述。</strong></p>
+              <h3>格式描述不清楚时？</h3>
+              <p>语言指令有时难以精确传达期望的输出形态。</p>
+              <p>还有一种更直接的方式：<strong>直接给模型看一个例子。</strong></p>
+              <p>这就是下一个维度——示例设计——要解决的问题。</p>
             </article>
           </div>
         </section>
@@ -260,7 +259,7 @@
               <p class="eyebrow">Transition</p>
               <h2>Prompt 写好了，但还不够</h2>
               <p class="lead">
-                即使把任务说明、推理引导和格式控制都写清楚，模型仍然不知道——我们课程的评分标准、老师的通知、这份课程大纲的具体版本。
+                四个维度解决的都是"怎么说"——它们无法解决"模型根本不知道"的问题。
               </p>
             </div>
             <article class="content-card accent-card">
