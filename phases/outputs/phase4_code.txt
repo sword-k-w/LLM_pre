@@ -1,0 +1,69 @@
+
+======================================================
+  Harness: 代码生成 + 反馈循环
+======================================================
+
+[第 1 次] 模型输出：
+
+def parse_receipt(text: str) -> list[dict]:
+    lines = text.strip().split('\n')
+    results = []
+    
+    for line in lines:
+        if line.strip():
+            parts = line.split(' × ')
+            name = parts[0].strip()
+            qty_price = parts[1].split(' @ ¥')
+            qty = int(qty_price[0].strip())
+            unit_price = float(qty_price[1].strip())
+            subtotal = qty * unit_price
+            results.append({"name": name, "qty": qty, "unit_price": unit_price, "subtotal": subtotal})
+    
+    return results
+
+[Harness 测试结果]
+  ✗ FAIL:
+[ASCII x 替代 ×]
+  输入：'蓝牙音箱 x 1 @ ¥399.00'
+  抛出异常：list index out of range
+
+  → 1 个测试失败，注入错误信息重试
+
+[反馈注入]
+测试失败，请修复函数。失败详情：
+
+[ASCII x 替代 ×]
+  输入：'蓝牙音箱 x 1 @ ¥399.00'
+  抛出异常：list index out of range
+
+[第 2 次] 模型输出：
+
+def parse_receipt(text: str) -> list[dict]:
+    lines = text.strip().split('\n')
+    results = []
+    
+    for line in lines:
+        if line.strip():
+            line = line.replace(' x ', ' × ')
+            parts = line.split(' × ')
+            if len(parts) == 2:
+                name = parts[0].strip()
+                qty_price = parts[1].split(' @ ¥')
+                if len(qty_price) == 2:
+                    qty = int(qty_price[0].strip())
+                    unit_price = float(qty_price[1].strip())
+                    subtotal = qty * unit_price
+                    results.append({"name": name, "qty": qty, "unit_price": unit_price, "subtotal": subtotal})
+    
+    return results
+
+[Harness 测试结果]
+  ✓ [基础：× 分隔符]
+  ✓ [ASCII x 替代 ×]
+  ✓ [多余空格]
+  ✓ [多行 + 空行]
+  ✓ [全为空行]
+
+======================================================
+  第 1 次：4/5  →  第 2 次：5/5
+======================================================

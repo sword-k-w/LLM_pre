@@ -157,61 +157,108 @@ const STEPS = [
       '模型正确引用了 14 天政策。信息的位置决定模型是否真正"看见"它。',
   },
   {
-    id: 'p4-buggy', phase: 4, title: '4a — Buggy Prompt', type: 'test-suite',
-    suiteLabel: 'Buggy prompt（缺少严格上下文约束）',
-    results: [
-      {
-        status: 'pass', name: '退货政策（有资料）', ms: 2221,
-        answer:
-          'iPhone 的退货政策是自购买日起有 14 天的退货窗口，需保留原始收据和完整包装。' +
-          '请确保您在退货窗口内，并携带必要的文件和包装到店办理退货。',
-      },
-      {
-        status: 'fail', name: '超出知识库范围（鞋类）', ms: 1927,
-        answer:
-          'ZephyrMart 的鞋子退货政策允许在购买后 30 天内退货，前提是鞋子未被穿过且保留原始包装。' +
-          '建议您访问 ZephyrMart 官方网站或联系客户服务以获取详细退货步骤和条件。',
-        reason: '缺少关键词「没有相关资料」— 模型用训练数据编造了 30 天政策',
-      },
-      {
-        status: 'fail', name: '完全离题请求', ms: 870,
-        answer:
-          '抱歉，我不能提供关于天气的信息。您可以使用天气应用程序或网站获取上海的最新天气信息。',
-        reason: '缺少关键词「没有相关资料」— 没有给出规范拒答短语',
-      },
-    ],
-    summary: '结果：1/3 通过  平均延迟：1673ms',
+    id: 'p4-round1', phase: 4, title: '4a — 生成 + 测试', type: 'code-harness',
+    leftLabel: '给模型的任务 Prompt（故意不提 × vs x）',
+    leftCode:
+      '请用 Python 实现函数：\n' +
+      '\n' +
+      '    def parse_receipt(text: str) -> list[dict]\n' +
+      '\n' +
+      '解析 ZephyrMart 收据文本，每行格式为：\n' +
+      '    <商品名> × <数量> @ ¥<单价>\n' +
+      '\n' +
+      '返回列表，每个元素为：\n' +
+      '    {"name": str, "qty": int,\n' +
+      '     "unit_price": float, "subtotal": float}\n' +
+      '\n' +
+      '忽略空行。只输出函数代码。',
+    leftLabel2: 'Harness 测试用例（接口约束先于代码存在）',
+    leftCode2:
+      'TEST_CASES = [\n' +
+      '  {"input": "iPhone 14 Pro × 2 @ ¥8999.00",\n' +
+      '   "expected": [{"name":"iPhone 14 Pro","qty":2,...}]},\n' +
+      '\n' +
+      '  # 关键边界：ASCII x（≠ ×）替代全角乘号\n' +
+      '  {"input": "蓝牙音箱 x 1 @ ¥399.00",\n' +
+      '   "expected": [{"name":"蓝牙音箱","qty":1,...}]},\n' +
+      '\n' +
+      '  {"input": "充电线  ×  3 @ ¥129.00", ...},\n' +
+      '  {"input": "...\\n\\n...", ...},\n' +
+      '  {"input": "\\n\\n\\n", "expected": []},\n' +
+      ']',
+    rightLabel: '[第 1 次] gpt-4o-mini 生成的代码 + Harness 测试结果',
+    rightTerminal:
+      'def parse_receipt(text: str) -> list[dict]:\n' +
+      '    lines = text.strip().split(\'\\n\')\n' +
+      '    results = []\n' +
+      '    for line in lines:\n' +
+      '        if line.strip():\n' +
+      '            parts = line.split(\' × \')   # ← 只认全角 ×\n' +
+      '            name = parts[0].strip()\n' +
+      '            qty_price = parts[1].split(\' @ ¥\')\n' +
+      '            qty = int(qty_price[0].strip())\n' +
+      '            unit_price = float(qty_price[1].strip())\n' +
+      '            subtotal = qty * unit_price\n' +
+      '            results.append({...})\n' +
+      '    return results\n' +
+      '\n' +
+      '══════════════════════════════════════\n' +
+      '[Harness 测试结果]  4 / 5 通过\n' +
+      '  ✗ FAIL: [ASCII x 替代 ×]\n' +
+      '    输入：\'蓝牙音箱 x 1 @ ¥399.00\'\n' +
+      '    异常：list index out of range\n' +
+      '\n' +
+      '→ 1 个测试失败，注入错误信息重试',
     note:
-      '测试套件自动定位到：模型缺少严格上下文约束，用训练数据编造了鞋类退货政策，' +
-      '对离题问题也没有给出规范拒答短语。修复：在 system prompt 补回一行严格上下文约束规则。',
+      '任务 prompt 没有提及 × vs x 这个边界条件——模型照例写了最直觉的实现。' +
+      'Harness 立刻捕获到失败，并生成机器可读的错误信息，准备注入下一轮对话。',
   },
   {
-    id: 'p4-fixed', phase: 4, title: '4b — Fixed Prompt', type: 'test-suite',
-    suiteLabel: 'Fixed prompt（补回严格上下文约束）',
-    results: [
-      {
-        status: 'pass', name: '退货政策（有资料）', ms: 2180,
-        answer:
-          'iPhone 的退货政策是提供 14 天的退货窗口。请确保保留原始收据和完整包装。' +
-          '建议您在退货窗口内联系 ZephyrMart 进行退货处理。',
-      },
-      {
-        status: 'pass', name: '超出知识库范围（鞋类）', ms: 2189,
-        answer:
-          '我没有相关资料，请联系人工客服。建议您直接访问我们的网站或联系 ZephyrMart 的人工客服' +
-          '以获取鞋子退货政策的详细信息。',
-      },
-      {
-        status: 'pass', name: '完全离题请求', ms: 1936,
-        answer: '我没有相关资料，请联系人工客服。建议您通过天气预报平台查询上海的天气信息。',
-      },
-    ],
-    summary: '结果：3/3 通过  平均延迟：2102ms',
-    final: 'Buggy: 1/3  \u2192  Fixed: 3/3',
+    id: 'p4-fixed', phase: 4, title: '4b — 反馈注入 → 全部通过', type: 'code-harness',
+    leftLabel: '自动注入的反馈（机器可读 → 直接续接对话）',
+    leftCode:
+      '# user message 追加到 messages[]\n' +
+      'feedback = """\n' +
+      '测试失败，请修复函数。失败详情：\n' +
+      '\n' +
+      '[ASCII x 替代 ×]\n' +
+      '  输入：\'蓝牙音箱 x 1 @ ¥399.00\'\n' +
+      '  抛出异常：list index out of range\n' +
+      '"""\n' +
+      'messages.append({"role":"assistant","content":resp1})\n' +
+      'messages.append({"role":"user",     "content":feedback})',
+    rightLabel: '[第 2 次] 修复后代码 + Harness 测试结果',
+    rightTerminal:
+      'def parse_receipt(text: str) -> list[dict]:\n' +
+      '    lines = text.strip().split(\'\\n\')\n' +
+      '    results = []\n' +
+      '    for line in lines:\n' +
+      '        if line.strip():\n' +
+      '            line = line.replace(\' x \', \' × \')  # ← 新增\n' +
+      '            parts = line.split(\' × \')\n' +
+      '            if len(parts) == 2:\n' +
+      '                name = parts[0].strip()\n' +
+      '                qty_price = parts[1].split(\' @ ¥\')\n' +
+      '                if len(qty_price) == 2:\n' +
+      '                    qty = int(qty_price[0].strip())\n' +
+      '                    unit_price = float(qty_price[1].strip())\n' +
+      '                    subtotal = qty * unit_price\n' +
+      '                    results.append({...})\n' +
+      '    return results\n' +
+      '\n' +
+      '══════════════════════════════════════\n' +
+      '[Harness 测试结果]  5 / 5 通过\n' +
+      '  ✓ [基础：× 分隔符]\n' +
+      '  ✓ [ASCII x 替代 ×]\n' +
+      '  ✓ [多余空格]\n' +
+      '  ✓ [多行 + 空行]\n' +
+      '  ✓ [全为空行]\n' +
+      '\n' +
+      '══════════════════════════════════════\n' +
+      '  第 1 次：4/5  →  第 2 次：5/5',
     note:
-      '补回"只能依据 [参考资料] 作答"规则后，三项全部通过。' +
-      '测试套件自动定位到错误、验证修复——这就是 Harness 工程的核心：' +
-      '约束（test cases）+ 反馈循环（fail \u2192 fix \u2192 re-run）。',
+      '反馈自动注入、模型自动修复、Harness 自动验证——整个循环无需人工介入。' +
+      '这就是 Harness 工程的核心：约束（test cases）+ 反馈循环（fail → fix → re-run）。',
   },
 ];
 
@@ -304,12 +351,31 @@ function renderTestSuite(step) {
     '</div></div>';
 }
 
+function renderCodeHarness(step) {
+  var extraBlock = step.leftCode2
+    ? '<div class="input-block input-block--secondary"><p class="input-block-label">' + esc(step.leftLabel2) + '</p>' +
+      '<pre class="input-block-pre">' + esc(step.leftCode2) + '</pre></div>'
+    : '';
+  return '<div class="step-layout">' +
+    '<div class="step-input-panel">' +
+    '<div class="input-block"><p class="input-block-label">' + esc(step.leftLabel) + '</p>' +
+    '<pre class="input-block-pre">' + esc(step.leftCode) + '</pre></div>' +
+    extraBlock +
+    '</div>' +
+    '<div class="step-output-panel">' +
+    '<div class="suite-terminal">' +
+    '<p class="suite-label">' + esc(step.rightLabel) + '</p>' +
+    '<pre class="suite-terminal-pre">' + esc(step.rightTerminal) + '</pre>' +
+    '</div></div></div>';
+}
+
 function renderStep(index) {
   var step = STEPS[index];
   var html;
   if      (step.type === 'single')     html = renderSingle(step);
   else if (step.type === 'compare')    html = renderCompare(step);
   else if (step.type === 'concept')    html = renderConcept(step);
+  else if (step.type === 'code-harness') html = renderCodeHarness(step);
   else if (step.type === 'test-suite') html = renderTestSuite(step);
   else html = '<p>Unknown type</p>';
 
