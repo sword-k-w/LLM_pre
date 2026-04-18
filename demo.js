@@ -1,368 +1,357 @@
-const contexts = [
+// ---------------------------------------------------------------------------
+// Step data  (all strings use single quotes to avoid conflict with " Chinese quotes)
+// ---------------------------------------------------------------------------
+const STEPS = [
   {
-    id: "syllabus-deliverable",
-    title: "课程要求 - 小组授课交付物",
-    text:
-      "小组授课需提交一份 HTML 格式课件，并准备一个可现场运行的演示 demo。授课时间约 45 分钟，建议控制在 38 分钟内容讲解和 7 分钟机动讨论。",
+    id: 'p1', phase: 1, title: '无工程介入', type: 'single',
+    input: { systemPrompt: null, context: null, question: '我买的 iPhone 退货政策是什么？' },
+    output:
+      'iPhone 的退货政策可能因购买地点和销售渠道而有所不同。\n\n' +
+      '1. 苹果官网或苹果零售店：苹果通常提供 14 天退货期，自收到产品之日起计算。' +
+      '产品必须处于完好状态，并包括所有原始包装和配件。\n\n' +
+      '2. 授权经销商：退货期可能是 7 到 14 天。' +
+      '具体政策请查看经销商的退货条款，或直接咨询销售人员。\n\n' +
+      '3. 在线购物平台（如京东、天猫等）：通常提供 7 到 15 天的退货期。\n\n' +
+      '无论在哪购买，建议在购买前仔细阅读相关退货政策，并在需要退货时尽快采取行动。',
+    note:
+      '没有 system prompt，模型直接从训练数据回答——给出的是 Apple 官方三渠道政策，不是 ZephyrMart 的实际规定。' +
+      '问题不在"提示词写得不好"，而在于模型根本不知道 ZephyrMart 的规定。',
   },
   {
-    id: "syllabus-topic",
-    title: "课程要求 - 主题范围",
-    text:
-      "讲解主题应围绕大语言模型中的工程实践问题，既包括提示设计，也包括上下文组织、实验评测或系统化落地方式。",
-  },
-  {
-    id: "course-policy",
-    title: "课堂规则 - 回答边界",
-    text:
-      "课程助手只能依据给定课程资料回答问题；如果资料没有覆盖，应明确说明不确定，并建议查看教师原始通知。",
-  },
-  {
-    id: "project-style",
-    title: "展示建议 - 课堂风格",
-    text:
-      "建议采用讲授与演示交替的节奏，先给概念框架，再立即用小型实验对比展示效果差异，让听众看到 prompt、context 和 harness 的分工。",
-  },
-];
-
-const presets = {
-  prompt: {
-    label: "Prompt 段",
-    questionIndex: 0,
-    systemPrompt:
-      "你是大语言模型课程的课程助教。请用中文回答，先给出简短结论，再用 2-3 个要点说明理由。如果资料不足，请明确说明不确定。",
-    selectedMode: "prompt_optimized",
-    checkedContexts: [],
-    checks: [
-      "回答是否先给结论，再给理由",
-      "是否避免空泛废话",
-      "是否在不知道时承认不确定",
-    ],
-    script:
-      "先强调这里只改 prompt，不给课程资料。让同学观察：回答结构更整齐了，但事实依据仍然不稳。",
-  },
-  context: {
-    label: "Context 段",
-    questionIndex: 1,
-    systemPrompt:
-      "你是大语言模型课程的课程助教。只依据提供的课程资料回答。请输出：1) 结论 2) 依据 3) 如果资料不足则说明缺口。",
-    selectedMode: "context_augmented",
-    checkedContexts: ["syllabus-deliverable", "course-policy"],
-    checks: [
-      "回答是否引用到了课程资料中的具体事实",
-      "是否体现出资料缺口与回答边界",
-      "是否比单纯 prompt 优化更具体",
-    ],
-    script:
-      "这里的重点是：同样的表达能力，如果把正确资料送进模型，答案会从“像那么回事”变成“有依据”。",
-  },
-  harness: {
-    label: "Harness 段",
-    questionIndex: 2,
-    systemPrompt:
-      "你是大语言模型课程的课程助教。必须使用三段式输出：结论、证据、风险。证据部分只引用给定课程资料；如果资料不全，风险部分指出未知项。",
-    selectedMode: "harness_mode",
-    checkedContexts: [
-      "syllabus-deliverable",
-      "syllabus-topic",
-      "course-policy",
-      "project-style",
-    ],
-    checks: [
-      "输出是否稳定遵守固定模板",
-      "是否给出证据来源与未知项",
-      "是否适合作为后续回归测试样例",
-    ],
-    script:
-      "这里不再只看某一次回答好不好，而是看这套设置能不能被固定下来，之后继续拿来做比较和回归。",
-  },
-};
-
-const standardQuestions = [
-  "课程项目需要交什么内容？",
-  "小组授课最终需要提交哪些文件？",
-  "为什么建议把 demo 穿插在讲授过程中？",
-];
-
-const fallbackLibrary = {
-  baseline: [
-    "课程项目一般需要提交课件、报告和演示材料，不过具体要看老师要求。建议准备完整一些的展示内容。",
-    "通常会提交课件和一些辅助文件，但不同课程安排不太一样，最好确认老师通知。",
-    "穿插 demo 有助于提高课堂参与度，让同学更容易理解，但这更多是一种展示风格上的建议。",
-  ],
-  prompt_optimized: [
-    "结论：课程项目通常需要一份展示材料和相应说明。\n\n要点：\n1. 需要围绕课程主题组织清晰的讲授内容。\n2. 最好准备可演示的材料以增强说服力。\n3. 如果具体提交格式没有给出，我不能确定是否还需要其他文件。",
-    "结论：通常需要提交与小组授课相关的展示文件。\n\n要点：\n1. 至少应有一份用于授课的课件。\n2. 可能还需要 demo 或补充材料，但当前没有证据确认。\n3. 如果老师另有通知，应以原通知为准。",
-    "结论：把 demo 穿插在讲授中，能让抽象概念更快落地。\n\n要点：\n1. 听众刚听完方法，马上就能看到效果差异。\n2. 课堂节奏更紧凑，不必等到最后集中展示。\n3. 具体是否推荐这种形式，还需要课程资料支持。",
-  ],
-  context_augmented: [
-    "结论：课程项目需要提交 HTML 格式课件和一个可现场运行的 demo。\n\n依据：\n1. 课程要求写明，小组授课需提交一份 HTML 格式课件。\n2. 同一条要求说明，还需要准备一个可现场运行的演示 demo。\n3. 授课时长约 45 分钟，建议按 38 分钟内容讲解和 7 分钟机动讨论来组织。",
-    "结论：小组授课最终需要提交至少两类文件：HTML 课件和 demo。\n\n依据：\n1. 课程要求 - 小组授课交付物明确提到 HTML 格式课件。\n2. 同一资料还要求准备可现场运行的演示 demo。\n3. 课程助手如果资料未覆盖其他附加材料，应明确说明未知，而不是自行补充。",
-    "结论：因为课程建议采用“讲授与演示交替”的节奏，所以把 demo 穿插在讲授中更符合要求。\n\n依据：\n1. 展示建议指出，先讲概念框架，再立即用小型实验对比展示效果差异。\n2. 这种节奏能让听众直接看到 prompt、context 和 harness 的分工。\n3. 如果没有更多教学安排说明，就不应再扩展额外原因。",
-  ],
-  harness_mode: [
-    "结论：当前能确认的交付物是 HTML 课件与现场 demo。\n\n证据：\n- 课程要求 - 小组授课交付物：需提交 HTML 格式课件。\n- 同一资料：需准备一个可现场运行的演示 demo。\n- 同一资料：授课时间约 45 分钟，建议控制为 38 分钟内容加 7 分钟机动。\n\n风险：\n- 资料没有说明是否必须提交书面报告，因此不能擅自补充。",
-    "结论：最终提交文件至少包括 HTML 课件和 demo。\n\n证据：\n- 课程要求中明确写出这两项交付物。\n- 课堂规则要求助手只依据给定课程资料回答。\n\n风险：\n- 若老师另行通知还要 README、录像或源码打包，当前资料没有覆盖，需要再查原始通知。",
-    "结论：把 demo 穿插在讲授过程中，是为了形成可观察、可比较的小实验节奏。\n\n证据：\n- 展示建议提出先给概念框架，再立即用小型实验对比展示效果差异。\n- Harness 的目的之一是让不同设置在同样问题下可比较、可复现。\n\n风险：\n- 如果现场网络不稳定，实时 API 演示可能失败，因此需要 fallback 方案。",
-  ],
-};
-
-const ui = {
-  presetButtons: Array.from(document.querySelectorAll(".preset-button")),
-  modeButtons: Array.from(document.querySelectorAll(".mode-button")),
-  userQuery: document.getElementById("user-query"),
-  systemPrompt: document.getElementById("system-prompt"),
-  contextList: document.getElementById("context-list"),
-  runComparison: document.getElementById("run-comparison"),
-  toggleContexts: document.getElementById("toggle-contexts"),
-  cycleQuestion: document.getElementById("cycle-question"),
-  presetLabel: document.getElementById("preset-label"),
-  questionIndex: document.getElementById("question-index"),
-  selectedModeLabel: document.getElementById("selected-mode-label"),
-  selectedTitle: document.getElementById("selected-title"),
-  selectedModeTag: document.getElementById("selected-mode-tag"),
-  baselineLatency: document.getElementById("baseline-latency"),
-  selectedLatency: document.getElementById("selected-latency"),
-  baselineSource: document.getElementById("baseline-source"),
-  selectedSource: document.getElementById("selected-source"),
-  baselineOutput: document.getElementById("baseline-output"),
-  selectedOutput: document.getElementById("selected-output"),
-  harnessChecks: document.getElementById("harness-checks"),
-  scriptNote: document.getElementById("script-note"),
-};
-
-const state = {
-  presetKey: "prompt",
-  selectedMode: "prompt_optimized",
-  questionCursor: 0,
-};
-
-function renderContexts(checkedContextIds) {
-  ui.contextList.innerHTML = "";
-
-  contexts.forEach((context) => {
-    const wrapper = document.createElement("article");
-    wrapper.className = "context-item";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = context.id;
-    checkbox.checked = checkedContextIds.includes(context.id);
-
-    const label = document.createElement("label");
-    const title = document.createElement("strong");
-    title.textContent = context.title;
-    const body = document.createElement("p");
-    body.textContent = context.text;
-
-    label.appendChild(checkbox);
-    label.append(" ");
-    label.appendChild(title);
-    label.appendChild(body);
-    wrapper.appendChild(label);
-    ui.contextList.appendChild(wrapper);
-  });
-}
-
-function getSelectedContextIds() {
-  return Array.from(ui.contextList.querySelectorAll('input[type="checkbox"]:checked')).map(
-    (checkbox) => checkbox.value
-  );
-}
-
-function getSelectedContexts() {
-  const selectedIds = new Set(getSelectedContextIds());
-  return contexts.filter((context) => selectedIds.has(context.id));
-}
-
-function renderChecks(checks) {
-  ui.harnessChecks.innerHTML = "";
-
-  checks.forEach((check) => {
-    const item = document.createElement("li");
-    item.textContent = check;
-    ui.harnessChecks.appendChild(item);
-  });
-}
-
-function updateModeButtons() {
-  ui.modeButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.mode === state.selectedMode);
-  });
-}
-
-function updatePresetButtons() {
-  ui.presetButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.preset === state.presetKey);
-  });
-}
-
-function applyPreset(presetKey) {
-  const preset = presets[presetKey];
-  state.presetKey = presetKey;
-  state.selectedMode = preset.selectedMode;
-  state.questionCursor = preset.questionIndex;
-
-  ui.userQuery.value = standardQuestions[state.questionCursor];
-  ui.systemPrompt.value = preset.systemPrompt;
-  ui.presetLabel.textContent = preset.label;
-  ui.questionIndex.textContent = `${state.questionCursor + 1} / ${standardQuestions.length}`;
-  ui.selectedModeLabel.textContent = formatModeName(state.selectedMode);
-  ui.selectedTitle.textContent = formatModeName(state.selectedMode);
-  ui.selectedModeTag.textContent = `Mode: ${state.selectedMode}`;
-  ui.scriptNote.textContent = preset.script;
-
-  renderContexts(preset.checkedContexts);
-  renderChecks(preset.checks);
-  updatePresetButtons();
-  updateModeButtons();
-  clearOutputs();
-}
-
-function formatModeName(mode) {
-  const mapping = {
-    prompt_optimized: "Prompt Optimized",
-    context_augmented: "Context Augmented",
-    harness_mode: "Harness Mode",
-  };
-
-  return mapping[mode] || mode;
-}
-
-function clearOutputs() {
-  ui.baselineLatency.textContent = "-- ms";
-  ui.selectedLatency.textContent = "-- ms";
-  ui.baselineSource.textContent = "等待运行";
-  ui.selectedSource.textContent = "等待运行";
-  ui.baselineOutput.textContent = "";
-  ui.selectedOutput.textContent = "";
-}
-
-function buildRequestPayload(mode) {
-  const selectedContexts =
-    mode === "baseline" ? [] : getSelectedContexts().map((context) => context.text);
-
-  return {
-    system_prompt: mode === "baseline" ? "请直接回答用户问题。" : ui.systemPrompt.value,
-    user_query: ui.userQuery.value.trim(),
-    context_blocks: selectedContexts,
-    experiment_mode: mode,
-  };
-}
-
-async function callModel(mode) {
-  const startedAt = performance.now();
-  const response = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+    id: 'p2a', phase: 2, title: '2a — 任务说明', type: 'single',
+    newItem: '无法确认的信息，回复"我没有相关资料，请联系人工客服"，不要猜测或编造。',
+    input: {
+      systemPrompt:
+        '你是 ZephyrMart 的客服助理，只回答与 ZephyrMart 相关的产品和政策问题。\n' +
+        '无法确认的信息，回复"我没有相关资料，请联系人工客服"，不要猜测或编造。',
+      context: null, question: '我买的 iPhone 退货政策是什么？',
     },
-    body: JSON.stringify(buildRequestPayload(mode)),
+    output: '我没有相关资料，请联系人工客服。',
+    note:
+      '加入角色 + 边界 + 拒答规则：模型从"胡编 Apple 政策"变成了"正确拒答"。' +
+      '诚实但无用——因为 ZephyrMart 的政策数据还没给它。',
+  },
+  {
+    id: 'p2b', phase: 2, title: '2b — CoT 推理引导', type: 'compare',
+    newItem: '回答步骤：先逐条列出每个优惠条件是否满足，再计算最终金额，最后给出结论。',
+    input: {
+      context:
+        '[ZephyrMart 促销规则]\n- 满 300 减 30\n- 满 500 减 80\n' +
+        '- 电子产品额外 9 折（折扣在满减之后计算）\n' +
+        '- 同一订单只能叠加一档满减，取门槛最高且满足条件的那档',
+      question: '我买了一台 ¥399 的蓝牙音箱和一根 ¥129 的充电线，请问能享受哪些优惠，最终需要付多少钱？',
+    },
+    left: {
+      label: '不带 CoT',
+      output:
+        '根据 ZephyrMart 的促销规则，订单总金额 ¥399 + ¥129 = ¥528。\n' +
+        '满 500 减 80，享受 ¥80 满减优惠。\n\n' +
+        '对蓝牙音箱（电子产品）应用 9 折：\n' +
+        '  ¥399 - (399/528 × 80) = ¥398.39，×0.9 = ¥358.55\n' +
+        '充电线：¥129 - (129/528 × 80) = ¥128.52\n\n' +
+        '最终支付：¥358.55 + ¥128.52 = ¥487.07  ✗（正确答案是 ¥403.2）',
+    },
+    right: {
+      label: '加 CoT 指令',
+      output:
+        '1. 商品总金额：¥399（蓝牙音箱）+ ¥129（充电线）= ¥528\n\n' +
+        '2. 满减优惠：\n' +
+        '   - 满 300 减 30：满足\n' +
+        '   - 满 500 减 80：满足\n' +
+        '   → 取门槛最高且满足条件的一档：满 500 减 80\n\n' +
+        '3. 电子产品额外 9 折（在满减之后）：\n' +
+        '   ¥528 - ¥80 = ¥448\n' +
+        '   ¥448 × 0.9 = ¥403.2\n\n' +
+        '最终需要支付的金额为 ¥403.2  ✓',
+    },
+    note:
+      '同一道题 8 次测试：不带 CoT 仅 1/8 算出正确答案；加入 CoT 步骤指令后 8/8 全部正确。' +
+      'CoT 把隐式推理步骤显式化，让模型不会跳步出错。',
+  },
+  {
+    id: 'p2c', phase: 2, title: '2c — 格式控制', type: 'single',
+    newItem: '输出格式：2 句话，第一句说结论，第二句说建议的下一步操作。不要使用列表或 Markdown。',
+    input: {
+      systemPrompt:
+        '你是 ZephyrMart 的客服助理，只回答与 ZephyrMart 相关的产品和政策问题。\n' +
+        '无法确认的信息，回复"我没有相关资料，请联系人工客服"，不要猜测或编造。\n' +
+        '回答步骤：先逐条列出每个优惠条件是否满足，再计算最终金额，最后给出结论。\n' +
+        '输出格式：2 句话，第一句说结论，第二句说建议的下一步操作。不要使用列表或 Markdown。',
+      context: null, question: '我买的 iPhone 退货政策是什么？',
+    },
+    output: '我没有相关资料，请联系人工客服。',
+    note: '格式约束把每次输出锁定为"结论句 + 下一步句"——输出长度和结构可预期，方便后续 Harness 测试对输出做断言。',
+  },
+  {
+    id: 'p2d', phase: 2, title: '2d — One-shot 示例', type: 'single',
+    newItem:
+      '示例输入：你们有哪些品牌的电视？\n' +
+      '示例输出：我没有相关资料，请联系人工客服。您也可以访问 ZephyrMart 官网查看完整商品目录。',
+    input: {
+      systemPrompt:
+        '你是 ZephyrMart 的客服助理，只回答与 ZephyrMart 相关的产品和政策问题。\n' +
+        '无法确认的信息，回复"我没有相关资料，请联系人工客服"，不要猜测或编造。\n' +
+        '输出格式：2 句话，第一句说结论，第二句说建议的下一步操作。不要使用列表或 Markdown。\n\n' +
+        '示例输入：你们有哪些品牌的电视？\n' +
+        '示例输出：我没有相关资料，请联系人工客服。您也可以访问 ZephyrMart 官网查看完整商品目录。',
+      context: null, question: '我买的 iPhone 退货政策是什么？',
+    },
+    output: '我没有相关资料，请联系人工客服。您也可以访问 ZephyrMart 官网查看详细退货政策。',
+    note:
+      'One-shot 示例示范了"建议下一步"的语气粒度：把用户引导到官网，而不是空泛的"请联系客服"。' +
+      '模型从示例学到了 tone，不需要在 prompt 里逐字描述语气。',
+  },
+  {
+    id: 'p3a', phase: 3, title: '3a — RAG 注入', type: 'single',
+    input: {
+      systemPrompt:
+        '你是 ZephyrMart 的客服助理，只依据提供的资料回答，不要猜测或编造。\n' +
+        '无法确认的信息，回复"我没有相关资料，请联系人工客服"。\n' +
+        '输出格式：2 句话，第一句说结论，第二句说建议的下一步操作。不要使用列表或 Markdown。',
+      context: '[资料 1]\n所有智能手机提供 14 天退货窗口，需保留原始收据和完整包装。',
+      question: '我买的 iPhone 退货政策是什么？',
+    },
+    output:
+      '根据资料，您的 iPhone 可以在购买后的 14 天内退货。' +
+      '请确保保留原始收据和完整包装。如果有进一步的疑问，请联系人工客服。',
+    note:
+      '从知识库检索到相关 chunk，注入 [资料] 后模型给出了正确的"14 天"答案。' +
+      '提示词没变，只是多了一段资料——这就是上下文工程的核心：给模型"教材"，而不是让它靠记忆猜测。',
+  },
+  {
+    id: 'p3b', phase: 3, title: '3b — Lost in the Middle', type: 'concept',
+    conceptTitle: '为什么信息的位置很重要？',
+    conceptBody:
+      'Liu et al. (2023)《Lost in the Middle》发现：当把大量资料块塞入长上下文时，\n' +
+      '模型对处于上下文中间位置的内容注意力最弱——头部和尾部最容易被引用，中间的关键信息容易被忽略。\n\n' +
+      '现实 RAG 系统往往把几十段资料一起送进去；如果最相关的 chunk 恰好排在中间，\n' +
+      '模型可能给出不完整甚至错误的答案，即使答案就在资料里。\n\n' +
+      '解法：\n' +
+      '\u2460 Reranking——把最相关的 chunk 排到最前面\n' +
+      '\u2461 关键事实前置——在所有资料前加一行"关键事实：……"\n' +
+      '下一步演示方案\u2461。',
+    conceptRef: 'arXiv: 2307.03172',
+    note:
+      '这个效应在现实中对应几十个 200-500 token chunk 全部注入的场景。' +
+      '实验室级别的短 chunk 演示效果不明显，但在生产系统中是常见故障模式。',
+  },
+  {
+    id: 'p3c', phase: 3, title: '3c — 关键事实前置', type: 'single',
+    input: {
+      systemPrompt:
+        '你是 ZephyrMart 的客服助理，只依据提供的资料回答，不要猜测或编造。\n' +
+        '无法确认的信息，回复"我没有相关资料，请联系人工客服"。\n' +
+        '输出格式：2 句话，第一句说结论，第二句说建议的下一步操作。不要使用列表或 Markdown。',
+      context:
+        '关键事实：所有智能手机提供 14 天退货窗口，需保留原始收据和完整包装。\n\n' +
+        '[资料 1]\n所有智能手机提供 14 天退货窗口，需保留原始收据和完整包装。\n\n' +
+        '[资料 2]\nZephyrMart 门店营业时间为每天 10:00\u201322:00。\n\n' +
+        '[资料 3]\n会员积分可在下次购物时抵扣，有效期 180 天。',
+      question: '我买的 iPhone 退货政策是什么？',
+    },
+    output:
+      '您的 iPhone 符合智能手机的退货政策，可以在购买后的 14 天内退货，但需要保留原始收据和完整包装。' +
+      '建议您确保满足这些条件，然后前往 ZephyrMart 门店办理退货手续。',
+    note:
+      '在多段资料前加一行"关键事实"，把最相关信息拉到最前面——这是最轻量的 reranking 方式。' +
+      '模型正确引用了 14 天政策。信息的位置决定模型是否真正"看见"它。',
+  },
+  {
+    id: 'p4-buggy', phase: 4, title: '4a — Buggy Prompt', type: 'test-suite',
+    suiteLabel: 'Buggy prompt（缺少严格上下文约束）',
+    results: [
+      {
+        status: 'pass', name: '退货政策（有资料）', ms: 2221,
+        answer:
+          'iPhone 的退货政策是自购买日起有 14 天的退货窗口，需保留原始收据和完整包装。' +
+          '请确保您在退货窗口内，并携带必要的文件和包装到店办理退货。',
+      },
+      {
+        status: 'fail', name: '超出知识库范围（鞋类）', ms: 1927,
+        answer:
+          'ZephyrMart 的鞋子退货政策允许在购买后 30 天内退货，前提是鞋子未被穿过且保留原始包装。' +
+          '建议您访问 ZephyrMart 官方网站或联系客户服务以获取详细退货步骤和条件。',
+        reason: '缺少关键词「没有相关资料」— 模型用训练数据编造了 30 天政策',
+      },
+      {
+        status: 'fail', name: '完全离题请求', ms: 870,
+        answer:
+          '抱歉，我不能提供关于天气的信息。您可以使用天气应用程序或网站获取上海的最新天气信息。',
+        reason: '缺少关键词「没有相关资料」— 没有给出规范拒答短语',
+      },
+    ],
+    summary: '结果：1/3 通过  平均延迟：1673ms',
+    note:
+      '测试套件自动定位到：模型缺少严格上下文约束，用训练数据编造了鞋类退货政策，' +
+      '对离题问题也没有给出规范拒答短语。修复：在 system prompt 补回一行严格上下文约束规则。',
+  },
+  {
+    id: 'p4-fixed', phase: 4, title: '4b — Fixed Prompt', type: 'test-suite',
+    suiteLabel: 'Fixed prompt（补回严格上下文约束）',
+    results: [
+      {
+        status: 'pass', name: '退货政策（有资料）', ms: 2180,
+        answer:
+          'iPhone 的退货政策是提供 14 天的退货窗口。请确保保留原始收据和完整包装。' +
+          '建议您在退货窗口内联系 ZephyrMart 进行退货处理。',
+      },
+      {
+        status: 'pass', name: '超出知识库范围（鞋类）', ms: 2189,
+        answer:
+          '我没有相关资料，请联系人工客服。建议您直接访问我们的网站或联系 ZephyrMart 的人工客服' +
+          '以获取鞋子退货政策的详细信息。',
+      },
+      {
+        status: 'pass', name: '完全离题请求', ms: 1936,
+        answer: '我没有相关资料，请联系人工客服。建议您通过天气预报平台查询上海的天气信息。',
+      },
+    ],
+    summary: '结果：3/3 通过  平均延迟：2102ms',
+    final: 'Buggy: 1/3  \u2192  Fixed: 3/3',
+    note:
+      '补回"只能依据 [参考资料] 作答"规则后，三项全部通过。' +
+      '测试套件自动定位到错误、验证修复——这就是 Harness 工程的核心：' +
+      '约束（test cases）+ 反馈循环（fail \u2192 fix \u2192 re-run）。',
+  },
+];
+
+const PHASES = { 1: '基准失败', 2: '提示工程', 3: '上下文工程', 4: 'Harness' };
+let cursor = 0;
+
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function blockHTML(label, text, cls) {
+  if (!text) return '';
+  return '<div class="input-block ' + (cls||'') + '">' +
+    '<p class="input-block-label">' + label + '</p>' +
+    '<pre class="input-block-pre">' + esc(text) + '</pre></div>';
+}
+
+function newItemHTML(text) {
+  if (!text) return '';
+  return '<div class="new-item-callout"><span class="new-item-badge">新增</span>' +
+    '<pre class="new-item-pre">' + esc(text) + '</pre></div>';
+}
+
+function renderSingle(step) {
+  var i = step.input;
+  return '<div class="step-layout">' +
+    '<div class="step-input-panel">' +
+    blockHTML('System Prompt', i.systemPrompt, 'block-system') +
+    blockHTML('上下文 / Context', i.context, 'block-context') +
+    blockHTML('用户提问', i.question, 'block-question') +
+    newItemHTML(step.newItem) + '</div>' +
+    '<div class="step-output-panel">' +
+    '<p class="input-block-label">模型输出</p>' +
+    '<pre class="output-pre">' + esc(step.output) + '</pre></div></div>';
+}
+
+function renderCompare(step) {
+  var i = step.input;
+  return '<div class="step-layout">' +
+    '<div class="step-input-panel">' +
+    blockHTML('上下文 / Context', i.context, 'block-context') +
+    blockHTML('用户提问', i.question, 'block-question') +
+    newItemHTML(step.newItem) + '</div>' +
+    '<div class="step-output-panel"><div class="compare-grid">' +
+    '<div class="compare-col compare-col--bad"><p class="compare-label">' + esc(step.left.label) + '</p>' +
+    '<pre class="output-pre">' + esc(step.left.output) + '</pre></div>' +
+    '<div class="compare-col compare-col--good"><p class="compare-label">' + esc(step.right.label) + '</p>' +
+    '<pre class="output-pre">' + esc(step.right.output) + '</pre></div>' +
+    '</div></div></div>';
+}
+
+function renderConcept(step) {
+  return '<div class="concept-layout">' +
+    '<div class="concept-block"><p class="eyebrow">核心概念</p>' +
+    '<h2 class="concept-title">' + esc(step.conceptTitle) + '</h2>' +
+    '<pre class="concept-body">' + esc(step.conceptBody) + '</pre>' +
+    '<p class="concept-ref">参考文献：' + esc(step.conceptRef) + '</p></div>' +
+    '<div class="concept-diagram">' +
+    '<div class="litm-diagram">' +
+    '<div class="litm-row litm-strong"><span class="litm-pos">1</span><span class="litm-bar">████████ 高注意力</span></div>' +
+    '<div class="litm-row litm-strong"><span class="litm-pos">2</span><span class="litm-bar">███████</span></div>' +
+    '<div class="litm-row litm-weak"><span class="litm-pos">3</span><span class="litm-bar">████ 注意力下降</span></div>' +
+    '<div class="litm-row litm-weakest"><span class="litm-pos litm-key">★</span><span class="litm-bar litm-key-bar">███ 关键信息埋在中间</span></div>' +
+    '<div class="litm-row litm-weak"><span class="litm-pos">5</span><span class="litm-bar">████</span></div>' +
+    '<div class="litm-row litm-strong"><span class="litm-pos">6</span><span class="litm-bar">███████</span></div>' +
+    '<div class="litm-row litm-strong"><span class="litm-pos">7</span><span class="litm-bar">████████ 高注意力</span></div>' +
+    '</div><p class="litm-caption">U 型注意力分布示意：头尾强，中间弱</p>' +
+    '</div></div>';
+}
+
+function renderTestRow(r) {
+  var icon = r.status === 'pass' ? '✓ PASS' : '✗ FAIL';
+  var cls  = r.status === 'pass' ? 'test-row--pass' : 'test-row--fail';
+  return '<div class="test-row ' + cls + '">' +
+    '<div class="test-row-head">' +
+    '<span class="test-status-badge">' + icon + '</span>' +
+    '<span class="test-name">' + esc(r.name) + '</span>' +
+    '<span class="test-ms">' + r.ms + 'ms</span></div>' +
+    '<p class="test-answer">回答：' + esc(r.answer) + '</p>' +
+    (r.reason ? '<p class="test-reason">原因：' + esc(r.reason) + '</p>' : '') +
+    '</div>';
+}
+
+function renderTestSuite(step) {
+  return '<div class="suite-layout"><div class="suite-terminal">' +
+    '<p class="suite-label">' + esc(step.suiteLabel) + '</p>' +
+    '<div class="suite-rows">' + step.results.map(renderTestRow).join('') + '</div>' +
+    '<p class="suite-summary">' + esc(step.summary) + '</p>' +
+    (step.final ? '<p class="suite-final">' + esc(step.final) + '</p>' : '') +
+    '</div></div>';
+}
+
+function renderStep(index) {
+  var step = STEPS[index];
+  var html;
+  if      (step.type === 'single')     html = renderSingle(step);
+  else if (step.type === 'compare')    html = renderCompare(step);
+  else if (step.type === 'concept')    html = renderConcept(step);
+  else if (step.type === 'test-suite') html = renderTestSuite(step);
+  else html = '<p>Unknown type</p>';
+
+  document.getElementById('step-content').innerHTML = html;
+  document.getElementById('step-counter').textContent = (index + 1) + ' / ' + STEPS.length;
+  document.getElementById('step-title-tag').textContent = step.title;
+  document.getElementById('teacher-note').textContent = step.note || '';
+
+  document.querySelectorAll('.phase-badge').forEach(function(el) {
+    el.classList.toggle('is-active', Number(el.dataset.phase) === step.phase);
   });
-
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
-  }
-
-  const data = await response.json();
-  if (data.error) {
-    throw new Error(data.error);
-  }
-  const latency = data.latency_ms || Math.round(performance.now() - startedAt);
-
-  return {
-    answer: data.answer,
-    latency_ms: latency,
-    fallback_used: Boolean(data.fallback_used),
-    source: data.fallback_used ? "server fallback" : "live api",
-    mode_used: data.mode_used || mode,
-  };
+  document.getElementById('prev-btn').disabled = index === 0;
+  document.getElementById('next-btn').disabled = index === STEPS.length - 1;
 }
 
-function buildLocalFallback(mode) {
-  const answer =
-    fallbackLibrary[mode][state.questionCursor] ||
-    "当前没有命中预置样例，请更换标准问题。";
-
-  return {
-    answer,
-    latency_ms: Math.round(120 + Math.random() * 120),
-    fallback_used: true,
-    source: "local fallback",
-    mode_used: mode,
-  };
+function go(delta) {
+  var next = cursor + delta;
+  if (next < 0 || next >= STEPS.length) return;
+  cursor = next;
+  renderStep(cursor);
 }
 
-async function getResponse(mode) {
-  try {
-    return await callModel(mode);
-  } catch (error) {
-    return buildLocalFallback(mode);
-  }
-}
-
-function renderResult(target, result) {
-  if (target === "baseline") {
-    ui.baselineLatency.textContent = `${result.latency_ms} ms`;
-    ui.baselineSource.textContent = result.source;
-    ui.baselineOutput.textContent = result.answer;
-    return;
-  }
-
-  ui.selectedLatency.textContent = `${result.latency_ms} ms`;
-  ui.selectedSource.textContent = result.source;
-  ui.selectedOutput.textContent = result.answer;
-}
-
-async function runComparison() {
-  ui.runComparison.disabled = true;
-  ui.runComparison.textContent = "运行中...";
-  clearOutputs();
-
-  const [baselineResult, selectedResult] = await Promise.all([
-    getResponse("baseline"),
-    getResponse(state.selectedMode),
-  ]);
-
-  renderResult("baseline", baselineResult);
-  renderResult("selected", selectedResult);
-
-  ui.runComparison.disabled = false;
-  ui.runComparison.textContent = "运行对比";
-}
-
-ui.presetButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    applyPreset(button.dataset.preset);
-  });
+document.getElementById('prev-btn').addEventListener('click', function() { go(-1); });
+document.getElementById('next-btn').addEventListener('click', function() { go(1); });
+document.addEventListener('keydown', function(e) {
+  if      (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+  else if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+  else if (e.key === 'Home') { cursor = 0; renderStep(0); }
 });
 
-ui.modeButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    state.selectedMode = button.dataset.mode;
-    ui.selectedModeLabel.textContent = formatModeName(state.selectedMode);
-    ui.selectedTitle.textContent = formatModeName(state.selectedMode);
-    ui.selectedModeTag.textContent = `Mode: ${state.selectedMode}`;
-    updateModeButtons();
-    clearOutputs();
+function buildPhaseNav() {
+  var nav = document.getElementById('phase-nav');
+  nav.innerHTML = Object.entries(PHASES).map(function(e) {
+    return '<button class="phase-badge" data-phase="' + e[0] + '">' + e[1] + '</button>';
+  }).join('');
+  nav.addEventListener('click', function(e) {
+    var b = e.target.closest('.phase-badge');
+    if (!b) return;
+    var idx = STEPS.findIndex(function(s) { return s.phase === Number(b.dataset.phase); });
+    if (idx !== -1) { cursor = idx; renderStep(cursor); }
   });
-});
+}
 
-ui.toggleContexts.addEventListener("click", () => {
-  const checkboxes = Array.from(ui.contextList.querySelectorAll('input[type="checkbox"]'));
-  const allChecked = checkboxes.every((checkbox) => checkbox.checked);
-  checkboxes.forEach((checkbox) => {
-    checkbox.checked = !allChecked;
-  });
-});
-
-ui.cycleQuestion.addEventListener("click", () => {
-  state.questionCursor = (state.questionCursor + 1) % standardQuestions.length;
-  ui.userQuery.value = standardQuestions[state.questionCursor];
-  ui.questionIndex.textContent = `${state.questionCursor + 1} / ${standardQuestions.length}`;
-  clearOutputs();
-});
-
-ui.runComparison.addEventListener("click", runComparison);
-
-applyPreset("prompt");
+buildPhaseNav();
+renderStep(0);

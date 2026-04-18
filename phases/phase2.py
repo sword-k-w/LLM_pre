@@ -58,11 +58,11 @@ SYSTEM_2C = SYSTEM_2B + """
 
 输出格式：2 句话，第一句说结论，第二句说建议的下一步操作。不要使用列表或 Markdown。"""
 
-# --- 2d: + one-shot ---
+# --- 2d: + one-shot (refusal format example) ---
 SYSTEM_2D = SYSTEM_2C + """
 
-示例输入：我的耳机坏了可以退吗？
-示例输出：ZephyrMart 对电子配件提供 7 天无理由退货。请携带购买凭证前往任一门店办理。"""
+示例输入：你们有哪些品牌的电视？
+示例输出：我没有相关资料，请联系人工客服。您也可以访问 ZephyrMart 官网查看完整商品目录。"""
 
 
 print("=== 2a: task spec only ===")
