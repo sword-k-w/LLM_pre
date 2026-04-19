@@ -759,7 +759,7 @@ textarea {
 /* ── Concept ── */
 .concept-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 260px;
   gap: 1rem;
   align-items: start;
 }
@@ -798,6 +798,15 @@ textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  overflow: hidden;
+}
+
+.concept-diagram-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius);
+  margin-bottom: 0.6rem;
 }
 
 .litm-diagram {

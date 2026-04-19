@@ -150,18 +150,23 @@ const STEPS = [
     id: 'p3b', phase: 3, title: '3b — Lost in the Middle', type: 'concept',
     conceptTitle: '为什么信息的位置很重要？',
     conceptBody:
-      'Liu et al. (2023)《Lost in the Middle》发现：当把大量资料块塞入长上下文时，\n' +
-      '模型对处于上下文中间位置的内容注意力最弱——头部和尾部最容易被引用，中间的关键信息容易被忽略。\n\n' +
-      '现实 RAG 系统往往把几十段资料一起送进去；如果最相关的 chunk 恰好排在中间，\n' +
-      '模型可能给出不完整甚至错误的答案，即使答案就在资料里。\n\n' +
+      'Liu et al. (2023)《Lost in the Middle》发现：当把大量资料块\n' +
+      '塞入长上下文时，模型对中间位置的内容注意力最弱（如右图 U 型曲线）\n' +
+      '——头部和尾部最容易被引用，中间的关键信息容易被忽略。\n\n' +
+      '现实 RAG 系统往往把几十段资料一起送进去；如果最相关的 chunk\n' +
+      '恰好排在中间，模型可能给出错误答案，即使答案就在资料里。\n\n' +
       '解法：\n' +
       '\u2460 Reranking——把最相关的 chunk 排到最前面\n' +
       '\u2461 关键事实前置——在所有资料前加一行"关键事实：……"\n' +
       '下一步演示方案\u2461。',
+    conceptImage: 'graph/lost_in_the_middle.png',
+    conceptCaption: '论文原图：GPT-3.5 在 20 文档场景下，答案在中间时准确率最低',
     conceptRef: 'arXiv: 2307.03172',
     note:
-      '这个效应在现实中对应几十个 200-500 token chunk 全部注入的场景。' +
-      '实验室级别的短 chunk 演示效果不明显，但在生产系统中是常见故障模式。',
+      '诚实说明：我们用 gpt-4o-mini + 40 个长 chunk（~4000 tokens）测试过，模型三种位置全部答对——' +
+      '现代模型经过了专项的长上下文训练，在这个规模上已基本消除了这个问题。' +
+      '论文里的 U 型曲线在 GPT-3.5/早期 GPT-4 的 10K–100K token 场景下才显著。' +
+      '生产系统里（几百个 chunk、几万 token）这个问题仍然值得警惕，但小 demo 里复现不出来。',
   },
   {
     id: 'p3c', phase: 3, title: '3c — 关键事实前置', type: 'single',
@@ -339,22 +344,24 @@ function renderCompare(step) {
 }
 
 function renderConcept(step) {
+  var diagramInner = step.conceptImage
+    ? '<img class="concept-diagram-img" src="' + step.conceptImage + '" alt="' + esc(step.conceptTitle) + '">' +
+      (step.conceptCaption ? '<p class="litm-caption">' + esc(step.conceptCaption) + '</p>' : '')
+    : '<div class="litm-diagram">' +
+      '<div class="litm-row litm-strong"><span class="litm-pos">1</span><span class="litm-bar">████████ 高注意力</span></div>' +
+      '<div class="litm-row litm-strong"><span class="litm-pos">2</span><span class="litm-bar">███████</span></div>' +
+      '<div class="litm-row litm-weak"><span class="litm-pos">3</span><span class="litm-bar">████ 注意力下降</span></div>' +
+      '<div class="litm-row litm-weakest"><span class="litm-pos litm-key">★</span><span class="litm-bar litm-key-bar">███ 关键信息埋在中间</span></div>' +
+      '<div class="litm-row litm-weak"><span class="litm-pos">5</span><span class="litm-bar">████</span></div>' +
+      '<div class="litm-row litm-strong"><span class="litm-pos">6</span><span class="litm-bar">███████</span></div>' +
+      '<div class="litm-row litm-strong"><span class="litm-pos">7</span><span class="litm-bar">████████ 高注意力</span></div>' +
+      '</div><p class="litm-caption">U 型注意力分布示意：头尾强，中间弱</p>';
   return '<div class="concept-layout">' +
     '<div class="concept-block"><p class="eyebrow">核心概念</p>' +
     '<h2 class="concept-title">' + esc(step.conceptTitle) + '</h2>' +
     '<pre class="concept-body">' + esc(step.conceptBody) + '</pre>' +
     '<p class="concept-ref">参考文献：' + esc(step.conceptRef) + '</p></div>' +
-    '<div class="concept-diagram">' +
-    '<div class="litm-diagram">' +
-    '<div class="litm-row litm-strong"><span class="litm-pos">1</span><span class="litm-bar">████████ 高注意力</span></div>' +
-    '<div class="litm-row litm-strong"><span class="litm-pos">2</span><span class="litm-bar">███████</span></div>' +
-    '<div class="litm-row litm-weak"><span class="litm-pos">3</span><span class="litm-bar">████ 注意力下降</span></div>' +
-    '<div class="litm-row litm-weakest"><span class="litm-pos litm-key">★</span><span class="litm-bar litm-key-bar">███ 关键信息埋在中间</span></div>' +
-    '<div class="litm-row litm-weak"><span class="litm-pos">5</span><span class="litm-bar">████</span></div>' +
-    '<div class="litm-row litm-strong"><span class="litm-pos">6</span><span class="litm-bar">███████</span></div>' +
-    '<div class="litm-row litm-strong"><span class="litm-pos">7</span><span class="litm-bar">████████ 高注意力</span></div>' +
-    '</div><p class="litm-caption">U 型注意力分布示意：头尾强，中间弱</p>' +
-    '</div></div>';
+    '<div class="concept-diagram">' + diagramInner + '</div></div>';
 }
 
 function renderTestRow(r) {
