@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Presentation</title>
+  <style>
+    /* ============================================================
+       THEME TOKENS — replaced by design_tokens.md in Phase 4/5
+       ============================================================ */
+    /*THEME_TOKENS*/
+
+    /* ============================================================
+       Reset & Base
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(32, 23, 15, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(32, 23, 15, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 95%);
+    }
+
+    h1, h2, h3, p, ul { margin: 0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ============================================================
+       Typography utilities
+       ============================================================ */
+    .eyebrow {
+      margin-bottom: 0.75rem;
+      color: var(--accent-strong);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 1.12rem;
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       Deck shell
+       ============================================================ */
+    .deck-body {
+      padding: 28px;
+    }
+
+    .deck-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .deck-topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .deck-topbar h1 {
+      font-size: clamp(2rem, 3vw, 3rem);
+      font-family: var(--serif);
+      line-height: 1.05;
+    }
+
+    .deck {
+      position: relative;
+      min-height: 72vh;
+    }
+
+    /* ============================================================
+       Slides
+       ============================================================ */
+    .slide {
+      display: none;
+      min-height: 72vh;
+      padding: clamp(1.6rem, 3vw, 3rem);
+      border: 1px solid rgba(32, 23, 15, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      animation: slide-in 280ms ease;
+    }
+
+    .slide.is-active { display: block; }
+
+    .slide h2 {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 3vw, 3.6rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+
+    .slide h3 {
+      margin-bottom: 0.8rem;
+      font-size: 1.12rem;
+    }
+
+    .slide ul {
+      padding-left: 1.15rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .slide strong { color: var(--ink); }
+
+    /* ============================================================
+       Layout grids
+       ============================================================ */
+    .slide-grid,
+    .two-column,
+    .timeline-grid,
+    .relationship-grid {
+      display: grid;
+      gap: 1.1rem;
+    }
+
+    .slide-grid {
+      grid-template-columns: 1.2fr 0.9fr;
+      align-items: center;
+      min-height: 100%;
+    }
+
+    .slide-grid-cover {
+      grid-template-columns: 1.15fr 0.85fr;
+    }
+
+    .slide-cover-center {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100%;
+      max-width: 640px;
+    }
+
+    .slide-cover-center h2 {
+      margin-top: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .two-column {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+
+    .card-stack {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .timeline-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 1.2rem;
+    }
+
+    .relationship-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 1.4rem;
+    }
+
+    .cover-panel {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    /* ============================================================
+       Cards
+       ============================================================ */
+    .content-card,
+    .timeline-card,
+    .metric-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .content-card,
+    .timeline-card {
+      padding: 1.25rem;
+    }
+
+    .metric-card {
+      padding: 1.1rem 1.2rem;
+    }
+
+    .metric-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .metric-card strong {
+      font-size: 1.45rem;
+    }
+
+    .accent-card,
+    .highlight-card {
+      background: linear-gradient(180deg, rgba(182, 84, 46, 0.08), rgba(255, 248, 236, 0.92));
+    }
+
+    .timeline-card strong {
+      display: inline-block;
+      margin-top: 0.9rem;
+    }
+
+    /* ============================================================
+       Badge, checklist, footer note
+       ============================================================ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 1rem;
+      border-radius: 999px;
+      background: rgba(182, 84, 46, 0.12);
+      color: var(--accent-strong);
+      font-weight: 700;
+    }
+
+    .footer-note {
+      margin-top: 1.1rem;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      position: relative;
+      padding-left: 1.5rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .checklist li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.66rem;
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), #db8f69);
+    }
+
+    /* ============================================================
+       Progress bar
+       ============================================================ */
+    .deck-footer {
+      margin-top: 1rem;
+    }
+
+    .slide-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .progress-track {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(32, 23, 15, 0.08);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      transition: width 220ms ease;
+    }
+
+    /* ============================================================
+       Animation
+       ============================================================ */
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       Responsive
+       ============================================================ */
+    @media (max-width: 1100px) {
+      .slide-grid,
+      .slide-grid-cover,
+      .two-column,
+      .timeline-grid,
+      .relationship-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .deck-body { padding: 18px; }
+    }
+
+    @media (max-width: 760px) {
+      .deck-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .slide {
+        min-height: 68vh;
+        padding: 1.25rem;
+      }
+
+      .slide h2 {
+        font-size: clamp(1.75rem, 9vw, 2.45rem);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck-body">
+    <div class="deck-shell">
+
+      <!-- Top bar: title + slide counter + presenter label -->
+      <header class="deck-topbar">
+        <h1><!--DECK_TITLE--></h1>
+        <div style="text-align:right;flex-shrink:0">
+          <div id="slide-presenter" style="font-size:0.9rem;color:var(--muted);margin-bottom:0.2rem"></div>
+          <div id="slide-counter" style="font-size:0.95rem;color:var(--muted)">1 / 1</div>
+        </div>
+      </header>
+
+      <!-- Slide deck -->
+      <main class="deck">
+        <!--SLIDES_PLACEHOLDER-->
+      </main>
+
+      <!-- Progress bar -->
+      <footer class="deck-footer">
+        <div class="slide-meta">
+          <span></span>
+          <span id="slide-counter-footer"></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const counter = document.getElementById("slide-counter");
+      const counterFooter = document.getElementById("slide-counter-footer");
+      const presenter = document.getElementById("slide-presenter");
+      const progressFill = document.getElementById("progress-fill");
+      let currentIndex = 0;
+
+      function renderSlide(index) {
+        currentIndex = Math.max(0, Math.min(index, slides.length - 1));
+        slides.forEach(function (slide, i) {
+          slide.classList.toggle("is-active", i === currentIndex);
+        });
+        var active = slides[currentIndex];
+        var presenterLabel = active.dataset.presenter || "";
+        var title = active.dataset.title || document.title;
+        var progress = ((currentIndex + 1) / slides.length) * 100;
+        document.title = title;
+        var pos = (currentIndex + 1) + " / " + slides.length;
+        counter.textContent = pos;
+        if (counterFooter) counterFooter.textContent = pos;
+        presenter.textContent = presenterLabel ? "Presenter " + presenterLabel : "";
+        progressFill.style.width = progress + "%";
+        window.location.hash = "slide-" + (currentIndex + 1);
+      }
+
+      function goNext() { renderSlide(currentIndex + 1); }
+      function goPrev() { renderSlide(currentIndex - 1); }
+
+      document.addEventListener("keydown", function (e) {
+        if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); goNext(); }
+        if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); goPrev(); }
+        if (e.key === "Home") renderSlide(0);
+        if (e.key === "End") renderSlide(slides.length - 1);
+      });
+
+      window.addEventListener("click", function (e) {
+        if (e.target.closest("a, button")) return;
+        goNext();
+      });
+
+      (function initFromHash() {
+        var match = window.location.hash.match(/slide-(\d+)/);
+        renderSlide(match ? Number(match[1]) - 1 : 0);
+      }());
+    }());
+  </script>
+</body>
+</html>
