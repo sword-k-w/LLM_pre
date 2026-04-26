@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>slide-craft Skill 介绍</title>
+  <style>
+    /* ============================================================
+       THEME TOKENS — tech
+       ============================================================ */
+    :root {
+      --bg: #0f1117;
+      --bg-strong: #1a1d27;
+      --surface: rgba(26, 30, 44, 0.88);
+      --surface-strong: rgba(30, 35, 52, 0.96);
+      --ink: #e8eaf0;
+      --muted: #8890a8;
+      --accent: #4f8ef7;
+      --accent-strong: #2b6be0;
+      --forest: #34c78a;
+      --line: rgba(232, 234, 240, 0.1);
+      --shadow: 0 22px 48px rgba(0, 0, 0, 0.45);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --sans: "Inter", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", sans-serif;
+      --serif: "Georgia", "Songti SC", serif;
+    }
+
+    /* ============================================================
+       Reset & Base
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(232, 234, 240, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232, 234, 240, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 95%);
+    }
+
+    h1, h2, h3, p, ul { margin: 0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ============================================================
+       Typography utilities
+       ============================================================ */
+    .eyebrow {
+      margin-bottom: 0.75rem;
+      color: var(--accent-strong);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 1.12rem;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.88em;
+      background: rgba(79, 142, 247, 0.12);
+      color: var(--accent);
+      border-radius: 4px;
+      padding: 0.1em 0.35em;
+    }
+
+    /* ============================================================
+       Deck shell
+       ============================================================ */
+    .deck-body {
+      padding: 28px;
+    }
+
+    .deck-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .deck-topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .deck-topbar h1 {
+      font-size: clamp(2rem, 3vw, 3rem);
+      font-family: var(--serif);
+      line-height: 1.05;
+    }
+
+    .deck {
+      position: relative;
+      min-height: 72vh;
+    }
+
+    /* ============================================================
+       Slides
+       ============================================================ */
+    .slide {
+      display: none;
+      min-height: 72vh;
+      padding: clamp(1.6rem, 3vw, 3rem);
+      border: 1px solid rgba(32, 23, 15, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      animation: slide-in 280ms ease;
+    }
+
+    .slide.is-active { display: block; }
+
+    .slide h2 {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 3vw, 3.6rem);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+
+    .slide h3 {
+      margin-bottom: 0.8rem;
+      font-size: 1.12rem;
+    }
+
+    .slide ul {
+      padding-left: 1.15rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .slide strong { color: var(--ink); }
+
+    /* ============================================================
+       Layout grids
+       ============================================================ */
+    .slide-grid,
+    .two-column,
+    .timeline-grid,
+    .relationship-grid {
+      display: grid;
+      gap: 1.1rem;
+    }
+
+    .slide-grid {
+      grid-template-columns: 1.2fr 0.9fr;
+      align-items: center;
+      min-height: 100%;
+    }
+
+    .slide-grid-cover {
+      grid-template-columns: 1.15fr 0.85fr;
+    }
+
+    .slide-cover-center {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100%;
+      max-width: 640px;
+    }
+
+    .slide-cover-center h2 {
+      margin-top: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .two-column {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+
+    .card-stack {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .timeline-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 1.2rem;
+    }
+
+    .relationship-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 1.4rem;
+    }
+
+    .cover-panel {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    /* ============================================================
+       Cards
+       ============================================================ */
+    .content-card,
+    .timeline-card,
+    .metric-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .content-card,
+    .timeline-card {
+      padding: 1.25rem;
+    }
+
+    .metric-card {
+      padding: 1.1rem 1.2rem;
+    }
+
+    .metric-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .metric-card strong {
+      font-size: 1.45rem;
+    }
+
+    .accent-card,
+    .highlight-card {
+      background: linear-gradient(180deg, rgba(79, 142, 247, 0.1), rgba(26, 30, 44, 0.92));
+      border-color: rgba(79, 142, 247, 0.25);
+    }
+
+    .timeline-card strong {
+      display: inline-block;
+      margin-top: 0.9rem;
+    }
+
+    /* ============================================================
+       Badge, checklist, footer note
+       ============================================================ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 1rem;
+      border-radius: 999px;
+      background: rgba(79, 142, 247, 0.15);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .footer-note {
+      margin-top: 1.1rem;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      position: relative;
+      padding-left: 1.5rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .checklist li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.66rem;
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), #6ab0ff);
+    }
+
+    /* ============================================================
+       Progress bar
+       ============================================================ */
+    .deck-footer {
+      margin-top: 1rem;
+    }
+
+    .slide-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .progress-track {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(232, 234, 240, 0.08);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      transition: width 220ms ease;
+    }
+
+    /* ============================================================
+       Animation
+       ============================================================ */
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       Responsive
+       ============================================================ */
+    @media (max-width: 1100px) {
+      .slide-grid,
+      .slide-grid-cover,
+      .two-column,
+      .timeline-grid,
+      .relationship-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .deck-body { padding: 18px; }
+    }
+
+    @media (max-width: 760px) {
+      .deck-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .slide {
+        min-height: 68vh;
+        padding: 1.25rem;
+      }
+
+      .slide h2 {
+        font-size: clamp(1.75rem, 9vw, 2.45rem);
+      }
+    }
+
+    /* ============================================================
+       tech theme: body / slide / progress overrides
+       ============================================================ */
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(79, 142, 247, 0.12), transparent 35%),
+        radial-gradient(circle at 80% 20%, rgba(52, 199, 138, 0.08), transparent 28%),
+        linear-gradient(135deg, #0f1117 0%, #141820 60%, #0f1117 100%);
+    }
+
+    .slide {
+      background: linear-gradient(160deg, rgba(26, 30, 44, 0.92), rgba(20, 24, 38, 0.88));
+      border-color: rgba(232, 234, 240, 0.08);
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, var(--accent), #6ab0ff, var(--forest));
+    }
+  </style>
+</head>
+<body>
+  <div class="deck-body">
+    <div class="deck-shell">
+
+      <!-- Top bar: title + slide counter -->
+      <header class="deck-topbar">
+        <h1>slide-craft Skill 介绍</h1>
+        <div style="text-align:right;flex-shrink:0">
+          <div id="slide-presenter" style="font-size:0.9rem;color:var(--muted);margin-bottom:0.2rem"></div>
+          <div id="slide-counter" style="font-size:0.95rem;color:var(--muted)">1 / 1</div>
+        </div>
+      </header>
+
+      <!-- Slide deck -->
+      <main class="deck">
+
+        <!-- Slide 1: Cover -->
+        <section class="slide is-active" data-title="slide-craft — HTML 幻灯片生成器">
+          <div class="slide-grid slide-grid-cover">
+            <div>
+              <p class="eyebrow">Claude Code Skill</p>
+              <h2>slide-craft</h2>
+              <p class="lead" style="margin-top:1rem">将任何主题一键生成精美的自包含 HTML 演示文稿，零依赖，浏览器直接打开演示。</p>
+            </div>
+            <div class="cover-panel">
+              <div class="metric-card content-card">
+                <span>外部依赖项</span>
+                <strong>零依赖</strong>
+              </div>
+              <div class="metric-card content-card">
+                <span>内置主题风格</span>
+                <strong>4 套主题</strong>
+              </div>
+              <div class="metric-card content-card">
+                <span>语言支持</span>
+                <strong>中 / EN</strong>
+              </div>
+            </div>
+          </div>
+          <!-- SPEAKER NOTES: 介绍 slide-craft 的定位——它是一个 Claude Code skill，用户只需描述主题，AI 就能生成完整的演示文稿 HTML 文件。 -->
+        </section>
+
+        <!-- Slide 2: timeline-grid 3×2 -->
+        <section class="slide" data-title="六步工作流">
+          <p class="eyebrow">工作流程</p>
+          <h2>六步工作流</h2>
+          <div class="timeline-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:1rem">
+            <div class="timeline-card content-card">
+              <div class="badge">①</div>
+              <strong>Gather</strong>
+              <p>从用户消息提取主题、页数、主题风格等参数，缺省时使用默认值。</p>
+            </div>
+            <div class="timeline-card content-card">
+              <div class="badge">②</div>
+              <strong>Draft Plan</strong>
+              <p>生成结构化计划文件（.md），每页含布局类型、关键信息与演讲注释。</p>
+            </div>
+            <div class="timeline-card content-card">
+              <div class="badge">③</div>
+              <strong>Confirm</strong>
+              <p>暂停等待用户确认，支持修改后重新确认。未经确认不生成 HTML。</p>
+            </div>
+            <div class="timeline-card content-card">
+              <div class="badge">④</div>
+              <strong>Select Theme</strong>
+              <p>读取 design_tokens.md，选定匹配主题的 CSS 变量集合备用。</p>
+            </div>
+            <div class="timeline-card content-card">
+              <div class="badge">⑤</div>
+              <strong>Generate</strong>
+              <p>读取 base_template + layouts + design_guidelines，逐页构建 HTML。</p>
+            </div>
+            <div class="timeline-card content-card accent-card">
+              <div class="badge">⑥</div>
+              <strong>Deliver</strong>
+              <p>写入 &lt;topic-slug&gt;-slides.html，单文件自包含，浏览器直接打开。</p>
+            </div>
+          </div>
+          <!-- SPEAKER NOTES: 重点强调 Phase 3 的"先确认再生成"机制，避免大模型直接输出用户不满意的内容。 -->
+        </section>
+
+        <!-- Slide 3: two-column -->
+        <section class="slide" data-title="7 种布局 × 4 套主题">
+          <p class="eyebrow">设计系统</p>
+          <h2>7 种布局 × 4 套主题</h2>
+          <div class="two-column" style="margin-top:1.2rem">
+            <div class="content-card">
+              <h3>布局库</h3>
+              <ul class="checklist" style="margin-top:0.6rem">
+                <li>slide-grid-cover — 封面标题页</li>
+                <li>card-stack — 并列要点卡片</li>
+                <li>timeline-grid — 流程 / 步骤</li>
+                <li>relationship-grid — 2×2 矩阵</li>
+                <li>two-column — 对比分析</li>
+                <li>slide-cover-center — 章节过渡</li>
+                <li>slide-grid — 文字 + 支撑卡片</li>
+              </ul>
+            </div>
+            <div class="content-card accent-card">
+              <h3>主题系统</h3>
+              <ul class="checklist" style="margin-top:0.6rem">
+                <li><strong>warm</strong> — 人文暖色，学术风格</li>
+                <li><strong>tech</strong> — 深色科技，开发者风格</li>
+                <li><strong>minimal</strong> — 商务简洁，纯白底色</li>
+                <li><strong>forest</strong> — 自然森林，深绿基调</li>
+              </ul>
+            </div>
+          </div>
+          <!-- SPEAKER NOTES: 演示不同布局和主题的视觉效果对比，说明如何通过 --theme 参数切换。 -->
+        </section>
+
+        <!-- Slide 4: slide-cover-center -->
+        <section class="slide" data-title="立即开始使用">
+          <div class="slide-cover-center">
+            <p class="eyebrow">快速上手</p>
+            <h2>立即开始使用</h2>
+            <p class="lead">安装 plugin 后，在 Claude Code 中输入 <code>/slide-craft</code> 命令即可启动。</p>
+            <ul class="checklist" style="margin-top:1.4rem">
+              <li>将 skill 文件放入 <code>~/.claude/plugins/slide-craft/skills/slide-craft/</code></li>
+              <li>调用：<code>/slide-craft [主题] [--pages N] [--theme warm|tech|minimal|forest]</code></li>
+              <li>输出：当前目录下的 <code>&lt;topic-slug&gt;-slides.html</code>，浏览器直接打开演示</li>
+            </ul>
+          </div>
+          <!-- SPEAKER NOTES: 结尾鼓励用户动手尝试，强调零依赖的便捷性。 -->
+        </section>
+
+      </main>
+
+      <!-- Progress bar -->
+      <footer class="deck-footer">
+        <div class="slide-meta">
+          <span></span>
+          <span id="slide-counter-footer"></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const counter = document.getElementById("slide-counter");
+      const counterFooter = document.getElementById("slide-counter-footer");
+      const presenter = document.getElementById("slide-presenter");
+      const progressFill = document.getElementById("progress-fill");
+      let currentIndex = 0;
+
+      function renderSlide(index) {
+        currentIndex = Math.max(0, Math.min(index, slides.length - 1));
+        slides.forEach(function (slide, i) {
+          slide.classList.toggle("is-active", i === currentIndex);
+        });
+        var active = slides[currentIndex];
+        var presenterLabel = active.dataset.presenter || "";
+        var title = active.dataset.title || document.title;
+        var progress = ((currentIndex + 1) / slides.length) * 100;
+        document.title = title;
+        var pos = (currentIndex + 1) + " / " + slides.length;
+        counter.textContent = pos;
+        if (counterFooter) counterFooter.textContent = pos;
+        presenter.textContent = presenterLabel ? "Presenter " + presenterLabel : "";
+        progressFill.style.width = progress + "%";
+        window.location.hash = "slide-" + (currentIndex + 1);
+      }
+
+      function goNext() { renderSlide(currentIndex + 1); }
+      function goPrev() { renderSlide(currentIndex - 1); }
+
+      document.addEventListener("keydown", function (e) {
+        if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); goNext(); }
+        if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); goPrev(); }
+        if (e.key === "Home") renderSlide(0);
+        if (e.key === "End") renderSlide(slides.length - 1);
+      });
+
+      window.addEventListener("click", function (e) {
+        if (e.target.closest("a, button")) return;
+        goNext();
+      });
+
+      (function initFromHash() {
+        var match = window.location.hash.match(/slide-(\d+)/);
+        renderSlide(match ? Number(match[1]) - 1 : 0);
+      }());
+    }());
+  </script>
+</body>
+</html>
